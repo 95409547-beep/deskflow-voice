@@ -17,6 +17,15 @@ private Q_SLOTS:
   void initTestCase();
   // Test are run in order top to bottom
   void mapModifiersFromOSX_OSXMask();
+  void rightOptionKeepsItsSide();
+  void leftOptionKeepsItsSide();
+  void bothOptionsReleaseIndependently();
+  void repeatedOptionFlagsDoNotDuplicateEvents();
+  void rightOptionWithoutDeviceFlags();
+  void rightOptionSurvivesShiftChanges();
+  void translateOrdinaryKeysOnWorkerThread();
+  void rightOptionCompatibilityKeepsLeftAndNativeState();
+  void rightOptionCompatibilityReleasesBothSides();
   void fakePollShift();
   void fakePollChar();
   void fakePollCharWithModifier();

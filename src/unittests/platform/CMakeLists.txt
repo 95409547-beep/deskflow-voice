@@ -10,6 +10,25 @@ if (WIN32)
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
   )
 elseif(APPLE)
+  add_executable(TISQtRuntimeProbe TISQtRuntimeProbe.cpp)
+  target_link_libraries(TISQtRuntimeProbe platform base arch app Qt::Widgets)
+  add_test(NAME TISQtRuntimeProbe COMMAND $<TARGET_FILE:TISQtRuntimeProbe>)
+  set_tests_properties(TISQtRuntimeProbe PROPERTIES TIMEOUT 40)
+  create_test(
+    NAME TISMainThreadProbe
+    DEPENDS platform
+    LIBS base arch app
+    SOURCE TISMainThreadProbe.cpp
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
+  )
+  create_test(
+    NAME TISReadPathsTests
+    DEPENDS platform
+    LIBS base arch app Qt::Widgets
+    SOURCE TISReadPathsTests.cpp
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
+  )
+  set_tests_properties(TISMainThreadProbe TISReadPathsTests PROPERTIES TIMEOUT 90)
   create_test(
     NAME OSXClipboardTests
     DEPENDS platform

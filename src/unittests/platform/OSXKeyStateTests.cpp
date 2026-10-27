@@ -9,6 +9,35 @@
 #include "OSXKeyStateTests.h"
 
 #include "base/EventQueue.h"
+#include <IOKit/hidsystem/IOLLEvent.h>
+#include <QSignalSpy>
+#include <QThread>
+
+namespace {
+class RecordingOSXKeyState : public OSXKeyState
+{
+public:
+  using OSXKeyState::OSXKeyState;
+  struct RecordedKey
+  {
+    KeyID id;
+    KeyButton button;
+    bool press;
+    KeyModifierMask mask;
+  };
+  std::vector<RecordedKey> recorded;
+
+  void sendKeyEvent(
+      void *target, bool press, bool repeat, KeyID key, KeyModifierMask mask, int32_t count, KeyButton button
+  ) override
+  {
+    recorded.push_back({key, button, press, mask});
+    OSXKeyState::sendKeyEvent(target, press, repeat, key, mask, count, button);
+  }
+};
+constexpr CGEventFlags leftOptionFlags = kCGEventFlagMaskAlternate | NX_DEVICELALTKEYMASK;
+constexpr CGEventFlags rightOptionFlags = kCGEventFlagMaskAlternate | NX_DEVICERALTKEYMASK;
+} // namespace
 
 #define SHIFT_ID_L kKeyShift_L
 #define SHIFT_ID_R kKeyShift_R
@@ -53,6 +82,187 @@ void OSXKeyStateTests::mapModifiersFromOSX_OSXMask()
   uint32_t numMask = 0 | kCGEventFlagMaskNumericPad;
   outMask = keyState.mapModifiersFromOSX(numMask);
   QCOMPARE(outMask, KeyModifierNumLock);
+}
+
+void OSXKeyStateTests::rightOptionKeepsItsSide()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, rightOptionFlags, kVK_RightOption);
+  QCOMPARE(state.recorded.size(), size_t(1));
+  QCOMPARE(state.recorded[0].id, kKeyAlt_R);
+  QCOMPARE(state.recorded[0].button, KeyButton(kVK_RightOption + 1));
+  QVERIFY(state.recorded[0].press);
+  QVERIFY(!state.isKeyDown(kVK_Option + 1));
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_RightOption);
+  QCOMPARE(state.recorded.size(), size_t(2));
+  QCOMPARE(state.recorded[1].id, kKeyAlt_R);
+  QCOMPARE(state.recorded[1].button, state.recorded[0].button);
+  QVERIFY(!state.recorded[1].press);
+}
+
+void OSXKeyStateTests::leftOptionKeepsItsSide()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, leftOptionFlags, kVK_Option);
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_Option);
+  QCOMPARE(state.recorded.size(), size_t(2));
+  QCOMPARE(state.recorded[0].id, kKeyAlt_L);
+  QCOMPARE(state.recorded[1].id, kKeyAlt_L);
+  QVERIFY(state.recorded[0].press);
+  QVERIFY(!state.recorded[1].press);
+}
+
+void OSXKeyStateTests::bothOptionsReleaseIndependently()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, leftOptionFlags, kVK_Option);
+  state.handleModifierKeys(&state, KeyModifierAlt, KeyModifierAlt, leftOptionFlags | rightOptionFlags, kVK_RightOption);
+  state.handleModifierKeys(&state, KeyModifierAlt, KeyModifierAlt, rightOptionFlags, kVK_Option);
+  QVERIFY(!state.isKeyDown(kVK_Option + 1));
+  QVERIFY(state.isKeyDown(kVK_RightOption + 1));
+  QCOMPARE(state.getActiveModifiers(), KeyModifierAlt);
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_RightOption);
+  QCOMPARE(state.recorded.size(), size_t(4));
+  QCOMPARE(state.recorded[0].id, kKeyAlt_L);
+  QCOMPARE(state.recorded[1].id, kKeyAlt_R);
+  QCOMPARE(state.recorded[2].id, kKeyAlt_L);
+  QCOMPARE(state.recorded[3].id, kKeyAlt_R);
+  QVERIFY(state.recorded[0].press && state.recorded[1].press);
+  QVERIFY(!state.recorded[2].press && !state.recorded[3].press);
+}
+
+void OSXKeyStateTests::repeatedOptionFlagsDoNotDuplicateEvents()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, rightOptionFlags, kVK_RightOption);
+  state.handleModifierKeys(&state, KeyModifierAlt, KeyModifierAlt, rightOptionFlags, kVK_RightOption);
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_RightOption);
+  state.handleModifierKeys(&state, 0, 0, 0, kVK_RightOption);
+  QCOMPARE(state.recorded.size(), size_t(2));
+}
+
+void OSXKeyStateTests::rightOptionWithoutDeviceFlags()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, kCGEventFlagMaskAlternate, kVK_RightOption);
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_RightOption);
+  QCOMPARE(state.recorded.size(), size_t(2));
+  QCOMPARE(state.recorded[0].id, kKeyAlt_R);
+  QCOMPARE(state.recorded[1].id, kKeyAlt_R);
+}
+
+void OSXKeyStateTests::rightOptionSurvivesShiftChanges()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, rightOptionFlags, kVK_RightOption);
+  state.handleModifierKeys(
+      &state, KeyModifierAlt, KeyModifierAlt | KeyModifierShift, rightOptionFlags | kCGEventFlagMaskShift, kVK_Shift
+  );
+  state.handleModifierKeys(&state, KeyModifierAlt | KeyModifierShift, KeyModifierAlt, rightOptionFlags, kVK_Shift);
+  QVERIFY(state.isKeyDown(kVK_RightOption + 1));
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_RightOption);
+  QCOMPARE(state.recorded.size(), size_t(4));
+  QCOMPARE(state.recorded[0].id, kKeyAlt_R);
+  QCOMPARE(state.recorded[1].id, kKeyShift_L);
+  QCOMPARE(state.recorded[2].id, kKeyShift_L);
+  QCOMPARE(state.recorded[3].id, kKeyAlt_R);
+  QVERIFY(state.recorded[0].press && state.recorded[1].press);
+  QVERIFY(!state.recorded[2].press && !state.recorded[3].press);
+}
+
+void OSXKeyStateTests::rightOptionCompatibilityKeepsLeftAndNativeState()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.setRightOptionAsAltGr(true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, rightOptionFlags, kVK_RightOption);
+  QCOMPARE(state.recorded[0].id, kKeyAltGr);
+  QCOMPARE(state.recorded[0].mask, KeyModifierAltGr);
+  QCOMPARE(state.getActiveModifiers(), KeyModifierAlt);
+  state.sendMappedKeyEvent(&state, true, false, 'a', KeyModifierAlt | KeyModifierControl, 1, 1);
+  QCOMPARE(state.recorded[1].id, KeyID('a'));
+  QCOMPARE(state.recorded[1].mask, KeyModifierAltGr | KeyModifierControl);
+  QCOMPARE(state.getActiveModifiers(), KeyModifierAlt);
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_RightOption);
+  QCOMPARE(state.recorded[2].id, kKeyAltGr);
+  QCOMPARE(state.recorded[2].mask, KeyModifierMask(0));
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, leftOptionFlags, kVK_Option);
+  QCOMPARE(state.recorded[3].id, kKeyAlt_L);
+  QCOMPARE(state.recorded[3].mask, KeyModifierAlt);
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_Option);
+  QCOMPARE(state.recorded[4].id, kKeyAlt_L);
+  QCOMPARE(state.recorded[4].mask, KeyModifierMask(0));
+}
+
+void OSXKeyStateTests::rightOptionCompatibilityReleasesBothSides()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.setRightOptionAsAltGr(true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, rightOptionFlags, kVK_RightOption);
+  state.handleModifierKeys(&state, KeyModifierAlt, KeyModifierAlt, rightOptionFlags | leftOptionFlags, kVK_Option);
+  QCOMPARE(state.recorded[1].id, kKeyAlt_L);
+  QCOMPARE(state.recorded[1].mask, KeyModifierAlt | KeyModifierAltGr);
+  state.handleModifierKeys(&state, KeyModifierAlt, KeyModifierAlt, leftOptionFlags, kVK_RightOption);
+  QCOMPARE(state.recorded[2].id, kKeyAltGr);
+  QCOMPARE(state.recorded[2].mask, KeyModifierAlt);
+  QVERIFY(state.isKeyDown(kVK_Option + 1));
+  QVERIFY(!state.isKeyDown(kVK_RightOption + 1));
+  state.handleModifierKeys(&state, KeyModifierAlt, 0, 0, kVK_Option);
+  QCOMPARE(state.recorded[3].id, kKeyAlt_L);
+  QCOMPARE(state.recorded[3].mask, KeyModifierMask(0));
+}
+
+void OSXKeyStateTests::translateOrdinaryKeysOnWorkerThread()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  OSXKeyState state(&events, keyMap, {"en"}, true);
+  // Construct events for translation only; never post them to the system.
+  CGEventRef event = CGEventCreateKeyboardEvent(nullptr, kVK_ANSI_A, true);
+  QVERIFY(event != nullptr);
+  CGEventSetFlags(event, 0);
+  OSXKeyState::KeyIDs expected;
+  KeyModifierMask mask = 0;
+  const KeyButton expectedButton = state.mapKeyFromEvent(expected, &mask, event);
+  QVERIFY(expectedButton != 0);
+  QVERIFY(!expected.empty());
+  bool matches = true;
+  m_log.setFilter(LogLevel::Level::Error);
+  std::unique_ptr<QThread> worker(QThread::create([&] {
+    state.updateKeyMap();
+    state.pollActiveGroup();
+    for (int i = 0; i < 2000; ++i) {
+      OSXKeyState::KeyIDs ids;
+      KeyModifierMask workerMask = 0;
+      matches = (state.mapKeyFromEvent(ids, &workerMask, event) == expectedButton && ids == expected) && matches;
+    }
+  }));
+  QSignalSpy finished(worker.get(), &QThread::finished);
+  worker->start();
+  // wait() pumps the main Qt loop, as the real core does. A timeout also
+  // catches a main-thread dispatch deadlock instead of hanging the test.
+  const bool completed = !finished.empty() || finished.wait(15000);
+  if (!completed)
+    qFatal("Keyboard translation worker did not finish within 15 seconds");
+  worker->wait();
+  m_log.setFilter(LogLevel::Level::Verbose);
+  CFRelease(event);
+  QVERIFY(matches);
 }
 
 void OSXKeyStateTests::fakePollShift()
