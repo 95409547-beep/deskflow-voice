@@ -26,7 +26,7 @@ static void expect(const std::vector<Effect> &effects, std::initializer_list<Eff
 
 static Route target()
 {
-  return {"trusted-peer", "window-identity-and-generation", Platform::Windows, true, true};
+  return {"trusted-peer", 1, Platform::Windows, true, true};
 }
 
 static void repeatAndLateReplies(Platform sender)
@@ -50,7 +50,7 @@ static void repeatAndLateReplies(Platform sender)
   require(!s.capturing(), "replayed sequence captured audio");
 }
 
-static void releaseBeforeStartAndFocusChange()
+static void releaseBeforeStartAndRouteChange()
 {
   Session s(Platform::Windows);
   s.routeChanged(target());
@@ -61,7 +61,7 @@ static void releaseBeforeStartAndFocusChange()
   s.press(2);
   s.receiverStarted(2);
   auto next = target();
-  next.inputContext = "another-window";
+  next.generation = 2;
   auto effects = s.routeChanged(next);
   expect(effects, {EffectKind::StopCapture, EffectKind::End});
   require(effects.back().target == target(), "END moved to the new target");
@@ -118,7 +118,7 @@ static void capabilitiesAndUnavailableRoute()
     if (unavailable == 2)
       r.peerIdentity.clear();
     if (unavailable == 3)
-      r.inputContext.clear();
+      r.generation = 0;
     s.routeChanged(r);
     expect(s.press(1), {});
     s.routeChanged(target());
@@ -147,7 +147,7 @@ int main()
   try {
     repeatAndLateReplies(Platform::MacOS);
     repeatAndLateReplies(Platform::Windows);
-    releaseBeforeStartAndFocusChange();
+    releaseBeforeStartAndRouteChange();
     disconnectAndDeadline();
     capabilitiesAndUnavailableRoute();
     receiverStopsWhileHeld();

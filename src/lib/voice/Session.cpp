@@ -10,7 +10,7 @@ namespace deskflow::voice {
 
 bool Route::canReceive() const
 {
-  return receiver == Platform::Windows && authenticated && ready && !peerIdentity.empty() && !inputContext.empty();
+  return receiver == Platform::Windows && authenticated && ready && !peerIdentity.empty() && generation != 0;
 }
 
 Session::Session(Platform sender) : m_sender(sender)

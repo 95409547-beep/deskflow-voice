@@ -37,7 +37,7 @@ enum class EffectKind
 struct Route
 {
   std::string peerIdentity;
-  std::string inputContext;
+  std::uint64_t generation = 0;
   Platform receiver = Platform::Unsupported;
   bool authenticated = false;
   bool ready = false;
