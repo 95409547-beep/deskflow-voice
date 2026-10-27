@@ -43,6 +43,35 @@ elseif(APPLE)
     SOURCE OSXKeyStateTests.cpp
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
   )
+  # The upstream full suite posts real keys (including Backspace). Keep that
+  # interactive suite opt-in; automated checks use explicit non-posting cases.
+  option(RUN_INTERACTIVE_INPUT_TESTS "Run tests that post real operating-system keyboard input" OFF)
+  if(NOT RUN_INTERACTIVE_INPUT_TESTS)
+    set_tests_properties(OSXKeyStateTests PROPERTIES DISABLED TRUE)
+  endif()
+  set_tests_properties(OSXKeyStateTests PROPERTIES LABELS "interactive-input")
+  add_test(NAME OSXKeyStateSafeTests COMMAND $<TARGET_FILE:OSXKeyStateTests>
+    mapModifiersFromOSX_OSXMask
+    rightOptionKeepsItsSide
+    leftOptionKeepsItsSide
+    bothOptionsReleaseIndependently
+    repeatedOptionFlagsDoNotDuplicateEvents
+    rightOptionWithoutDeviceFlags
+    rightOptionSurvivesShiftChanges
+    translateOrdinaryKeysOnWorkerThread
+    rightOptionCompatibilityKeepsLeftAndNativeState
+    rightOptionCompatibilityReleasesBothSides
+    lostModifierReleasesRecoverBeforeNextInput
+    heldModifiersSurviveInputSnapshots
+    staleButtonsRecoverAfterMaskRefresh
+    staleRightOptionUsesCompatibilityMapping
+    modifierRecoveryDoesNotInventPresses
+  )
+  set_tests_properties(OSXKeyStateSafeTests PROPERTIES
+    TIMEOUT 40
+    LABELS "no-os-input"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/platform"
+  )
 elseif(UNIX)
   if(LIBEI_FOUND)
     create_test(

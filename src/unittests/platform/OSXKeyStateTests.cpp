@@ -227,6 +227,105 @@ void OSXKeyStateTests::rightOptionCompatibilityReleasesBothSides()
   QCOMPARE(state.recorded[3].mask, KeyModifierMask(0));
 }
 
+void OSXKeyStateTests::lostModifierReleasesRecoverBeforeNextInput()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  const KeyModifierMask modifiers = KeyModifierShift | KeyModifierControl | KeyModifierSuper;
+  const CGEventFlags flags = kCGEventFlagMaskShift | kCGEventFlagMaskControl | kCGEventFlagMaskCommand;
+  state.handleModifierKeys(&state, 0, modifiers, flags, kVK_Command);
+  QCOMPARE(state.recorded.size(), size_t(3));
+
+  // Lose all three flags-changed releases, as in the reported Windows
+  // state. The next unmodified input must queue releases before the click.
+  state.releaseStaleModifiers(&state, 0);
+  QCOMPARE(state.recorded.size(), size_t(6));
+  for (size_t i = 0; i < 3; ++i) {
+    QCOMPARE(state.recorded[i + 3].id, state.recorded[i].id);
+    QCOMPARE(state.recorded[i + 3].button, state.recorded[i].button);
+    QVERIFY(!state.recorded[i + 3].press);
+    QVERIFY(!state.isKeyDown(state.recorded[i].button));
+  }
+  QCOMPARE(state.getActiveModifiers(), KeyModifierMask(0));
+  state.sendMappedKeyEvent(&state, true, false, 'a', state.getActiveModifiers(), 1, kVK_ANSI_A + 1);
+  QCOMPARE(state.recorded.back().mask, KeyModifierMask(0));
+
+  const size_t count = state.recorded.size();
+  state.releaseStaleModifiers(&state, 0);
+  QCOMPARE(state.recorded.size(), count);
+}
+
+void OSXKeyStateTests::heldModifiersSurviveInputSnapshots()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  const KeyModifierMask modifiers = KeyModifierShift | KeyModifierControl | KeyModifierSuper | KeyModifierAlt;
+  const CGEventFlags flags =
+      kCGEventFlagMaskShift | kCGEventFlagMaskControl | kCGEventFlagMaskCommand | kCGEventFlagMaskAlternate;
+  state.handleModifierKeys(&state, 0, modifiers, flags, kVK_Option);
+  const size_t count = state.recorded.size();
+  // A long drag/shortcut must remain held. Device-specific flags are optional.
+  for (int i = 0; i < 1000; ++i)
+    state.releaseStaleModifiers(&state, flags);
+  QCOMPARE(state.recorded.size(), count);
+  QCOMPARE(state.getActiveModifiers(), modifiers);
+
+  // Recover Ctrl/Command/Option while Shift is legitimately still down.
+  state.releaseStaleModifiers(&state, kCGEventFlagMaskShift);
+  QCOMPARE(state.getActiveModifiers(), KeyModifierShift);
+  QVERIFY(state.isKeyDown(kVK_Shift + 1));
+  QCOMPARE(state.recorded.size(), count + 3);
+}
+
+void OSXKeyStateTests::staleButtonsRecoverAfterMaskRefresh()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  // A refreshed aggregate mask can be clear while side-specific buttons are
+  // still down. Recover every side, but preserve Caps Lock and ordinary keys.
+  const KeyButton buttons[] = {kVK_Shift + 1,  kVK_RightShift + 1,  kVK_Control + 1, kVK_RightControl + 1,
+                               kVK_Option + 1, kVK_RightOption + 1, kVK_Command + 1, kVK_RightCommand + 1};
+  for (KeyButton button : buttons)
+    state.onKey(button, true, KeyModifierCapsLock);
+  state.onKey(kVK_ANSI_A + 1, true, KeyModifierCapsLock);
+  state.releaseStaleModifiers(&state, kCGEventFlagMaskAlphaShift);
+  QCOMPARE(state.recorded.size(), size_t(8));
+  for (KeyButton button : buttons)
+    QVERIFY(!state.isKeyDown(button));
+  for (const auto &key : state.recorded)
+    QVERIFY(!key.press);
+  QVERIFY(state.isKeyDown(kVK_ANSI_A + 1));
+  QCOMPARE(state.getActiveModifiers(), KeyModifierCapsLock);
+}
+
+void OSXKeyStateTests::staleRightOptionUsesCompatibilityMapping()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.setRightOptionAsAltGr(true);
+  state.handleModifierKeys(&state, 0, KeyModifierAlt, rightOptionFlags, kVK_RightOption);
+  state.releaseStaleModifiers(&state, 0);
+  QCOMPARE(state.recorded.size(), size_t(2));
+  QCOMPARE(state.recorded.back().id, kKeyAltGr);
+  QCOMPARE(state.recorded.back().button, state.recorded.front().button);
+  QVERIFY(!state.recorded.back().press);
+  QCOMPARE(state.recorded.back().mask, KeyModifierMask(0));
+}
+
+void OSXKeyStateTests::modifierRecoveryDoesNotInventPresses()
+{
+  deskflow::KeyMap keyMap;
+  EventQueue events;
+  RecordingOSXKeyState state(&events, keyMap, {"en"}, true);
+  state.releaseStaleModifiers(&state, kCGEventFlagMaskShift | kCGEventFlagMaskControl | kCGEventFlagMaskCommand);
+  QVERIFY(state.recorded.empty());
+  QCOMPARE(state.getActiveModifiers(), KeyModifierMask(0));
+}
+
 void OSXKeyStateTests::translateOrdinaryKeysOnWorkerThread()
 {
   deskflow::KeyMap keyMap;

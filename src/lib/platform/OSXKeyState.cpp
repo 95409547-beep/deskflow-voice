@@ -893,6 +893,37 @@ bool OSXKeyState::mapDeskflowHotKeyToMac(
   return true;
 }
 
+void OSXKeyState::releaseStaleModifiers(void *target, CGEventFlags nativeMask)
+{
+  const KeyModifierMask nativeModifiers = mapModifiersFromOSX(nativeMask);
+  const struct
+  {
+    KeyModifierMask mask;
+    uint32_t virtualKey;
+    KeyID id;
+  } modifiers[] = {
+      {KeyModifierShift, s_shiftVK, kKeyShift_L},
+      {KeyModifierShift, s_shiftRightVK, kKeyShift_R},
+      {KeyModifierControl, s_controlVK, kKeyControl_L},
+      {KeyModifierControl, s_controlRightVK, kKeyControl_R},
+      {KeyModifierAlt, s_altVK, kKeyAlt_L},
+      {KeyModifierAlt, s_altRightVK, kKeyAlt_R},
+      {KeyModifierSuper, s_superVK, kKeySuper_L},
+      {KeyModifierSuper, s_superRightVK, kKeySuper_R}
+  };
+
+  for (const auto &modifier : modifiers) {
+    if ((nativeModifiers & modifier.mask) == 0 && isKeyDown(mapVirtualKeyToKeyButton(modifier.virtualKey))) {
+      // A flags-changed release can be missed while the tap is disabled or
+      // switching computers. Use the next input's flags, before its click/key
+      // is queued, so stale modifiers cannot turn it into a shortcut. Check
+      // button state too: the aggregate mask may already have been refreshed.
+      LOG_DEBUG("recovering missed modifier release: keycode=%u", modifier.virtualKey);
+      handleModifierKey(target, modifier.virtualKey, modifier.id, false, getActiveModifiers() & ~modifier.mask);
+    }
+  }
+}
+
 void OSXKeyState::handleModifierKeys(
     void *target, KeyModifierMask oldMask, KeyModifierMask newMask, CGEventFlags nativeMask, uint32_t virtualKey
 )

@@ -34,6 +34,8 @@ make install_sw
 "$HOME/Library/Caches/DeskflowVoice/build-tools/bin/python" tools/build_macos.py --qt-dir "$HOME/Library/Caches/DeskflowVoice/Qt/6.11.3/macos" --openssl-dir "$HOME/Library/Caches/DeskflowVoice/openssl/3.6.4-macos15" --test
 ```
 
-脚本构建 GUI、core、公共模型与测试，只运行公共会话、右 Option 与 TIS 相关的有限检查，不打开 Deskflow 主界面、注册键鼠捕获、读写系统剪贴板或启动语音。
+脚本构建 GUI、core、公共模型与测试，只运行公共会话、`OSXKeyStateSafeTests` 的 15 个不发键用例和 TIS 检查，不打开 Deskflow 主界面、注册键鼠捕获、读写系统剪贴板或启动语音。
+
+上游完整 `OSXKeyStateTests` 含 `fakePollShift`、`fakePollChar`、`fakePollCharWithModifier`，会向真实系统发送按键，现已默认停用。只有专用交互测试环境才显式开启 `RUN_INTERACTIVE_INPUT_TESTS`；日常开发不需要开启。此前构建入口误选完整用例的问题与修正见[修饰键恢复记录](modifier-recovery.md)。
 
 `build/macos` 中的应用仍属于未完成产品身份/安装器迁移的开发产物，不提供替换现有安装的步骤。Windows 完整构建及干净安装按阶段计划另行验证；本说明不声称跨平台安装包已完成。

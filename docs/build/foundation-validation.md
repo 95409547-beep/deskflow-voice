@@ -2,6 +2,8 @@
 
 日期：2026-10-27。范围：公共会话模型、Mac 右 Option/TIS 补丁、整理后的 Windows 接收/输入法组件及构建入口。对应开发 PR：[工程基础 #1](https://github.com/95409547-beep/deskflow-voice/pull/1)。
 
+后续更正：本记录的旧 `OSXKeyStateTests` 包含上游真实发键 case；不能把它整体视为无系统输入检查。当前入口已改成 15 个明确不发键的 `OSXKeyStateSafeTests`，复测结果与原测试失败记录见[漏松键恢复](modifier-recovery.md)。
+
 ## 本地验证
 
 | 项目 | 环境与方式 | 结果 |

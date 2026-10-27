@@ -26,6 +26,11 @@ private Q_SLOTS:
   void translateOrdinaryKeysOnWorkerThread();
   void rightOptionCompatibilityKeepsLeftAndNativeState();
   void rightOptionCompatibilityReleasesBothSides();
+  void lostModifierReleasesRecoverBeforeNextInput();
+  void heldModifiersSurviveInputSnapshots();
+  void staleButtonsRecoverAfterMaskRefresh();
+  void staleRightOptionUsesCompatibilityMapping();
+  void modifierRecoveryDoesNotInventPresses();
   void fakePollShift();
   void fakePollChar();
   void fakePollCharWithModifier();

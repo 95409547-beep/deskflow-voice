@@ -41,6 +41,9 @@ public:
   void handleModifierKeys(
       void *target, KeyModifierMask oldMask, KeyModifierMask newMask, CGEventFlags nativeMask, uint32_t virtualKey
   );
+  // Recover missed modifier releases before forwarding another input event.
+  // Never synthesize presses or release modifiers still present in that event.
+  void releaseStaleModifiers(void *target, CGEventFlags nativeMask);
   void setRightOptionAsAltGr(bool enabled)
   {
     m_rightOptionAsAltGr = enabled;

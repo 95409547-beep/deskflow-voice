@@ -48,10 +48,10 @@ def main():
     subprocess.run([str(cmake), '--build', str(args.build_dir), '--parallel', str(min(os.cpu_count() or 2, 8))],
                    env=env, check=True)
     if args.test:
-        # Focused tests do not touch the user's clipboard or send OS input.
+        # Explicit safe suite excludes upstream cases that post real OS keys.
         env['QT_QPA_PLATFORM'] = 'offscreen'
         subprocess.run([str(ctest), '--test-dir', str(args.build_dir / 'src/unittests'),
-                        '-R', '^(VoiceSessionTests|OSXKeyStateTests|TISMainThreadProbe|TISReadPathsTests|TISQtRuntimeProbe)$',
+                        '-R', '^(VoiceSessionTests|OSXKeyStateSafeTests|TISMainThreadProbe|TISReadPathsTests|TISQtRuntimeProbe)$',
                         '--output-on-failure'], env=env, check=True)
 
 

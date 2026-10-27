@@ -1702,6 +1702,18 @@ CGEventRef OSXComputer::handleCGInputEvent(CGEventTapProxy proxy, CGEventType ty
 {
   OSXComputer *computer = (OSXComputer *)refcon;
 
+  // Only the server captures physical input. Recover a lost modifier release
+  // before queuing the next input, rather than relying on another modifier
+  // press to repair the client's state. Ignore tap lifecycle notifications.
+  if (computer->m_isPrimary &&
+      ((type >= kCGEventLeftMouseDown && type <= kCGEventFlagsChanged) || type == kCGEventScrollWheel ||
+       type == kCGEventOtherMouseDown || type == kCGEventOtherMouseUp || type == kCGEventOtherMouseDragged)) {
+    // Synthetic mouse events can omit flags. A key still down at the HID
+    // source must also be preserved, even if this event has no modifier bits.
+    const CGEventFlags held = CGEventGetFlags(event) | CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
+    computer->m_keyState->releaseStaleModifiers(computer->getEventTarget(), held);
+  }
+
   switch (type) {
   case kCGEventLeftMouseDown:
   case kCGEventRightMouseDown:
