@@ -9,10 +9,10 @@
 ```sh
 python3 -m venv "$HOME/Library/Caches/DeskflowVoice/build-tools"
 "$HOME/Library/Caches/DeskflowVoice/build-tools/bin/python" -m pip install -r tools/build-requirements.txt
-"$HOME/Library/Caches/DeskflowVoice/build-tools/bin/aqt" install-qt mac desktop 6.11.3 clang_64 --outputdir "$HOME/Library/Caches/DeskflowVoice/Qt" --archives qtbase qtsvg qttools qttranslations --timeout 120
+"$HOME/Library/Caches/DeskflowVoice/build-tools/bin/aqt" -c tools/aqt.ini install-qt mac desktop 6.11.3 clang_64 --outputdir "$HOME/Library/Caches/DeskflowVoice/Qt" --archives qtbase qtdeclarative qtsvg qttools qttranslations --timeout 120
 ```
 
-Qt 安装器的可选模块和基础 archive 列表不同；本基线所需 qtsvg/qttools 属于基础 archive，不使用不存在的同名可选模块参数。网络下载中断后需重新检查 SDK 完整性，不能把部分安装当作已就绪。
+Qt 安装器的可选模块和基础 archive 列表不同；本基线所需 qtsvg/qttools 属于基础 archive，不使用不存在的同名可选模块参数。Qt 6.11.3 的 lupdate 依赖 QtQml，因此需要 qtdeclarative archive。网络下载中断后需重新检查 SDK 完整性，不能把部分安装当作已就绪。
 
 ## OpenSSL
 

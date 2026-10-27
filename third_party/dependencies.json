@@ -8,7 +8,8 @@
   "foundation": {
     "cxx_standard": 20,
     "qt_sdk": "6.11.3",
-    "qt_archives": ["qtbase", "qtsvg", "qttools", "qttranslations"],
+    "qt_archives": ["qtbase", "qtdeclarative", "qtsvg", "qttools", "qttranslations"],
+    "windows_component_dotnet_sdk": "10.0.400 (latestPatch)",
     "openssl": {
       "version": "3.6.4",
       "source": "https://github.com/openssl/openssl/releases/tag/openssl-3.6.4",

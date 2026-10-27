@@ -9,8 +9,9 @@ Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Wi
 - 基于 Deskflow v1.27.0 固化独立开发目录，保留上游历史与版权。
 - 迁移 Mac 右 Option 与 TIS 主线程访问修复及对应检查。
 - 新增可独立构建的 C++20 会话状态机：两种发送端、Windows 接收端、重复会话、松开、焦点变化、断线与迟到消息处理。
-- 新增跨平台会话 CI；没有录音、网络传输、驱动安装或输入注入。
-- 两端原型源码已作内部快照。带有个机配置的原始 Windows 快照不会直接发布，正在整理成可复用组件。
+- 新增跨平台会话 CI，以及 Windows 组件构建、纯托管检查和独立运行库发布检查。
+- 迁移 Windows 接收与输入法适配源码；默认显示帮助，仅开放 82 项纯托管检查，真实语音入口尚未接通。
+- 两端原型源码已作内部快照；公开组件已移除个机路径、设备标识、凭据和运行记录。
 
 ## 检查公共会话模块
 
@@ -28,6 +29,8 @@ ctest --test-dir build/voice -C Release --output-on-failure
 - [会话接口与边界](docs/architecture/voice-session.md)
 - [首批技术与许可决策](docs/adr/0001-foundation.md)
 - [Mac 完整源码构建](docs/build/macos.md)
+- [Windows 独立组件构建](components/windows-voice/README.md)
+- [本批工程验证记录](docs/build/foundation-validation.md)
 - [上游 Deskflow 说明](.github/README.md)
 
 当前代码不应替换已在使用的 Deskflow。开发构建不自动安装、不启动核心、不修改已有配置。独立产品标识、安装器和语音页面将在相应阶段实现。

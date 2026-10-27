@@ -33,6 +33,12 @@ SPDX-FileCopyrightText = "Deskflow Developers"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
+path = "components/windows-voice/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Deskflow Voice contributors"
+SPDX-License-Identifier = "GPL-2.0-only WITH LicenseRef-OpenSSL-Exception"
+
+[[annotations]]
 path = [
    "deploy/mac/dmg-background.tiff"
  , "deploy/mac/dmg-volume.icns"
@@ -67,7 +73,7 @@ SPDX-FileCopyrightText = "Deskflow Developers"
 SPDX-License-Identifier = "GPL-2.0-only WITH LicenseRef-OpenSSL-Exception"
 
 [[annotations]]
-path = ["README.md", "docs/product/**", "docs/architecture/voice-session.md", "docs/adr/0001-foundation.md", "docs/build/macos.md", "tools/build-requirements-macos-py313.lock", ".github/workflows/voice-foundation.yml", "third_party/dependencies.json"]
+path = ["README.md", "docs/product/**", "docs/architecture/voice-session.md", "docs/adr/0001-foundation.md", "docs/build/**", "tools/build-requirements-macos-py313.lock", ".github/workflows/voice-foundation.yml", "third_party/dependencies.json"]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Deskflow Voice contributors"
 SPDX-License-Identifier = "MIT"

@@ -1,0 +1,11 @@
+{
+  "bind_address": "127.0.0.1",
+  "port": 24812,
+  "allowed_peer": "127.0.0.1",
+  "token_environment": "DESKFLOW_VOICE_TOKEN",
+  "certificate_path": "pairing/receiver.pfx",
+  "certificate_password_environment": "DESKFLOW_VOICE_CERTIFICATE_PASSWORD",
+  "waveout_name_prefix": "Select an installed virtual audio output",
+  "hotkey_verified": true,
+  "hotkey": ["RALT"]
+}

@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Deskflow Voice contributors
+# SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
+artifacts/
+bin/
+obj/
+runtime/
+private/
+*.local.json
+*.pfx
+*.pem
+*.key
+*.cer
+*.p12
+*.jsonl
+*.wav
+*.pcm
