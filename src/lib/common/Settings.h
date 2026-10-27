@@ -100,6 +100,14 @@ public:
     inline static const auto KeySize = QStringLiteral("security/keySize");
     inline static const auto TlsEnabled = QStringLiteral("security/tlsEnabled");
   };
+  struct Voice
+  {
+    inline static const auto Enabled = QStringLiteral("voice/enabled");
+    inline static const auto Role = QStringLiteral("voice/role");
+    inline static const auto InputUid = QStringLiteral("voice/inputUid");
+    inline static const auto TargetComputer = QStringLiteral("voice/targetComputer");
+    inline static const auto Shortcut = QStringLiteral("voice/shortcut");
+  };
   struct Server
   {
     inline static const auto ClipboardSize = QStringLiteral("server/clipboardSize");
@@ -269,11 +277,17 @@ private:
     , QStringLiteral("log")
     , QStringLiteral("security")
     , QStringLiteral("server")
+    , QStringLiteral("voice")
     , QStringLiteral("internalConfig")
   };
 
   inline static const QStringList m_validKeys = {
-      Client::DynamicConnectionRetry
+      Voice::Enabled
+    , Voice::Role
+    , Voice::InputUid
+    , Voice::TargetComputer
+    , Voice::Shortcut
+    , Client::DynamicConnectionRetry
     , Client::InvertYScroll
     , Client::InvertXScroll
     , Client::LanguageSync
@@ -339,7 +353,8 @@ private:
 
   // When checking the default values this list contains the ones that default to false.
   inline static const QStringList m_defaultFalseValues = {
-      Gui::Autohide
+      Voice::Enabled
+    , Gui::Autohide
     , Gui::AutoStartCore
     , Gui::ShownFirstConnectedMessage
     , Gui::ShownServerFirstStartMessage

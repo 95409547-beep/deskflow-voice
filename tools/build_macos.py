@@ -51,7 +51,7 @@ def main():
         # Explicit safe suite excludes upstream cases that post real OS keys.
         env['QT_QPA_PLATFORM'] = 'offscreen'
         subprocess.run([str(ctest), '--test-dir', str(args.build_dir / 'src/unittests'),
-                        '-R', '^(VoiceSessionTests|OSXKeyStateSafeTests|TISMainThreadProbe|TISReadPathsTests|TISQtRuntimeProbe)$',
+                        '-R', '^(VoiceSessionTests|VoiceSettingsTests|OSXKeyStateSafeTests|TISMainThreadProbe|TISReadPathsTests|TISQtRuntimeProbe)$',
                         '--output-on-failure'], env=env, check=True)
 
 

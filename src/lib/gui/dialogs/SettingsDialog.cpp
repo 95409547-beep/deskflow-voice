@@ -14,24 +14,30 @@
 #include "common/I18N.h"
 #include "common/Settings.h"
 #include "gui/TlsUtility.h"
+#include "gui/core/CoreProcess.h"
 #include "gui/core/NetworkMonitor.h"
+#include "gui/voice/VoiceSettingsPage.h"
 #include "gui/widgets/SettingsDialogButtonBox.h"
 
 #include <QComboBox>
 #include <QDir>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QTimer>
 
 using namespace deskflow::gui;
 
-SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig)
+SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig, CoreProcess *core)
     : QDialog(parent),
       ui{std::make_unique<Ui::SettingsDialog>()},
       m_serverConfig(serverConfig),
-      m_buttonBox{new SettingsDialogButtonBox(this)}
+      m_buttonBox{new SettingsDialogButtonBox(this)},
+      m_core(core)
 {
 
   ui->setupUi(this);
+  m_voicePage = new voice::SettingsPage(this);
+  ui->tabWidget->addTab(m_voicePage, tr("跨设备语音"));
   layout()->addWidget(m_buttonBox);
   ui->tabWidget->setCurrentIndex(0);
 
@@ -78,11 +84,17 @@ SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig
 
   adjustSize();
   QApplication::processEvents();
-  setFixedHeight(height());
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+  setMinimumSize(650, 520);
+  resize(sizeHint().expandedTo(QSize(740, 560)));
   setWindowFlags((windowFlags() | Qt::CustomizeWindowHint) & ~Qt::WindowMinMaxButtonsHint);
 
   setButtonBoxEnabledButtons();
   initConnections();
+  refreshVoiceConnection();
+  auto *voiceTimer = new QTimer(this);
+  connect(voiceTimer, &QTimer::timeout, this, &SettingsDialog::refreshVoiceConnection);
+  voiceTimer->start(1000);
 }
 
 void SettingsDialog::changeEvent(QEvent *e)
@@ -96,6 +108,7 @@ void SettingsDialog::changeEvent(QEvent *e)
 
 void SettingsDialog::initConnections() const
 {
+  connect(m_voicePage, &voice::SettingsPage::preferencesChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(m_buttonBox, &SettingsDialogButtonBox::accepted, this, &SettingsDialog::accept);
   connect(m_buttonBox, &SettingsDialogButtonBox::rejected, this, &QDialog::reject);
   connect(m_buttonBox, &SettingsDialogButtonBox::reset, this, &SettingsDialog::loadFromConfig);
@@ -220,6 +233,10 @@ void SettingsDialog::updateText()
 
 void SettingsDialog::accept()
 {
+  m_requiresCoreRestart = generalSettingsModified();
+  const auto voiceValues = m_voicePage->preferences().toValues();
+  for (auto it = voiceValues.cbegin(); it != voiceValues.cend(); ++it)
+    Settings::setValue(it.key(), it.value());
   Settings::setValue(Settings::Core::Port, ui->sbPort->value());
   Settings::setValue(Settings::Core::Interface, ui->comboInterface->currentData());
   Settings::setValue(Settings::Log::Level, ui->comboLogLevel->currentData());
@@ -255,6 +272,11 @@ void SettingsDialog::accept()
 
 void SettingsDialog::loadFromConfig()
 {
+  QVariantMap voiceValues;
+  const auto voiceKeys = voice::Preferences::defaults().toValues().keys();
+  for (const auto &key : voiceKeys)
+    voiceValues.insert(key, Settings::value(key));
+  m_voicePage->loadPreferences(voice::Preferences::fromValues(voiceValues));
   ui->sbPort->setValue(Settings::value(Settings::Core::Port).toInt());
   ui->comboLogLevel->setCurrentIndex(
       ui->comboLogLevel->findData(Settings::logLevelText(), Qt::UserRole, Qt::MatchFixedString)
@@ -297,14 +319,13 @@ void SettingsDialog::loadFromConfig()
   ui->comboInterface->setCurrentText(Settings::value(Settings::Core::Interface).toString());
   if (ui->comboInterface->currentIndex() <= 0) {
     ui->comboInterface->setCurrentIndex(0);
-    m_interfaceSetOnLoad = false;
-  } else {
-    m_interfaceSetOnLoad = true;
   }
 
   qDebug() << "load from config done";
 
   updateControls();
+  m_generalBaseline = generalControlValues();
+  setButtonBoxEnabledButtons();
 }
 
 void SettingsDialog::updateTlsControls()
@@ -365,6 +386,7 @@ void SettingsDialog::updateKeyLengthOnFile(const QString &path)
 void SettingsDialog::updateControls()
 {
   const bool writable = Settings::isWritable();
+  m_voicePage->setWritable(writable);
   const bool serviceChecked = ui->groupService->isChecked();
   const bool logToFile = ui->groupLogToFile->isChecked();
 
@@ -419,36 +441,42 @@ void SettingsDialog::logLevelChanged()
 
 bool SettingsDialog::isModified() const
 {
-  const auto processMode = Settings::value(Settings::Core::ProcessMode).value<Settings::ProcessMode>();
-  const bool ignoreInterface = !m_interfaceSetOnLoad && (ui->comboInterface->currentIndex() == 0);
+  return generalSettingsModified() || m_voicePage->isModified();
+}
 
-  bool modified =
-      (ui->sbPort->value() != Settings::value(Settings::Core::Port).toInt()) ||
-      (ui->comboLogLevel->currentData() != Settings::logLevelText()) ||
-      (ui->groupLogToFile->isChecked() != Settings::value(Settings::Log::ToFile).toBool()) ||
-      (ui->lineLogFilename->text() != Settings::value(Settings::Log::File).toString()) ||
-      (ui->rbAutoHide->isChecked() != Settings::value(Settings::Gui::Autohide).toBool()) ||
-      (ui->cbPreventSleep->isChecked() != Settings::value(Settings::Core::PreventSleep).toBool()) ||
-      (ui->rbCloseToTray->isChecked() != Settings::value(Settings::Gui::CloseToTray).toBool()) ||
-      (ui->cbElevateDaemon->isChecked() != Settings::value(Settings::Daemon::Elevate).toBool()) ||
-      (ui->cbAutoUpdate->isChecked() != Settings::value(Settings::Gui::AutoUpdateCheck).toBool()) ||
-      (ui->cbGuiDebug->isChecked() != Settings::value(Settings::Log::GuiDebug).toBool()) ||
-      (ui->cbShowVersion->isChecked() != Settings::value(Settings::Gui::ShowVersionInTitle).toBool()) ||
-      (ui->rbIconMono->isChecked() != Settings::value(Settings::Gui::SymbolicTrayIcon).toBool()) ||
-      (ui->groupService->isChecked() != (processMode == Settings::ProcessMode::Service)) ||
-      (ui->lineTlsCertPath->text() != Settings::value(Settings::Security::Certificate).toString()) ||
-      (ui->comboTlsKeyLength->currentText() != Settings::value(Settings::Security::KeySize).toString()) ||
-      (ui->groupSecurity->isChecked() != Settings::value(Settings::Security::TlsEnabled).toBool()) ||
-      (ui->cbRequireClientCert->isChecked() != Settings::value(Settings::Security::CheckPeers).toBool()) ||
-      (ui->cbRunEnterCommand->isChecked() != Settings::value(Settings::Core::EnableEnterCommand).toBool()) ||
-      (ui->cbRunExitCommand->isChecked() != Settings::value(Settings::Core::EnableExitCommand).toBool()) ||
-      (ui->lineCommandEnter->text() != Settings::value(Settings::Core::ComputerEnterCommand).toString()) ||
-      (ui->lineCommandExit->text() != Settings::value(Settings::Core::ComputerExitCommand).toString()) ||
-      (I18N::nativeTo639Name(ui->comboLanguage->currentText()) != Settings::value(Settings::Core::Language).toString());
+bool SettingsDialog::generalSettingsModified() const
+{
+  // Compare user-visible values with the loaded UI, not normalized defaults.
+  return generalControlValues() != m_generalBaseline;
+}
 
-  if (!ignoreInterface)
-    modified = modified || ui->comboInterface->currentText() != Settings::value(Settings::Core::Interface).toString();
-  return modified;
+QVariantMap SettingsDialog::generalControlValues() const
+{
+  return {
+      {QStringLiteral("port"), ui->sbPort->value()},
+      {QStringLiteral("interface"), ui->comboInterface->currentText()},
+      {QStringLiteral("logLevel"), ui->comboLogLevel->currentData()},
+      {QStringLiteral("logToFile"), ui->groupLogToFile->isChecked()},
+      {QStringLiteral("logFile"), ui->lineLogFilename->text()},
+      {QStringLiteral("autoHide"), ui->rbAutoHide->isChecked()},
+      {QStringLiteral("preventSleep"), ui->cbPreventSleep->isChecked()},
+      {QStringLiteral("closeToTray"), ui->rbCloseToTray->isChecked()},
+      {QStringLiteral("elevate"), ui->cbElevateDaemon->isChecked()},
+      {QStringLiteral("autoUpdate"), ui->cbAutoUpdate->isChecked()},
+      {QStringLiteral("guiDebug"), ui->cbGuiDebug->isChecked()},
+      {QStringLiteral("showVersion"), ui->cbShowVersion->isChecked()},
+      {QStringLiteral("monoIcon"), ui->rbIconMono->isChecked()},
+      {QStringLiteral("service"), ui->groupService->isChecked()},
+      {QStringLiteral("tlsCert"), ui->lineTlsCertPath->text()},
+      {QStringLiteral("tlsKeyLength"), ui->comboTlsKeyLength->currentText()},
+      {QStringLiteral("tlsEnabled"), ui->groupSecurity->isChecked()},
+      {QStringLiteral("clientCert"), ui->cbRequireClientCert->isChecked()},
+      {QStringLiteral("runEnter"), ui->cbRunEnterCommand->isChecked()},
+      {QStringLiteral("runExit"), ui->cbRunExitCommand->isChecked()},
+      {QStringLiteral("enterCommand"), ui->lineCommandEnter->text()},
+      {QStringLiteral("exitCommand"), ui->lineCommandExit->text()},
+      {QStringLiteral("language"), I18N::nativeTo639Name(ui->comboLanguage->currentText())}
+  };
 }
 
 bool SettingsDialog::isDefault() const
@@ -457,35 +485,35 @@ bool SettingsDialog::isDefault() const
   const auto logLevelIndex =
       static_cast<int>(LogLevel::fromOption(Settings::defaultValue(Settings::Log::Level).toString()));
 
-  return (
-      (ui->sbPort->value() == Settings::defaultValue(Settings::Core::Port).toInt()) &&
-      (ui->comboLogLevel->currentIndex() == logLevelIndex) &&
-      (ui->groupLogToFile->isChecked() == Settings::defaultValue(Settings::Log::ToFile).toBool()) &&
-      (ui->lineLogFilename->text() == Settings::defaultValue(Settings::Log::File).toString()) &&
-      (ui->rbAutoHide->isChecked() == Settings::defaultValue(Settings::Gui::Autohide).toBool()) &&
-      (ui->cbPreventSleep->isChecked() == Settings::defaultValue(Settings::Core::PreventSleep).toBool()) &&
-      (ui->rbCloseToTray->isChecked() == Settings::defaultValue(Settings::Gui::CloseToTray).toBool()) &&
-      (ui->cbElevateDaemon->isChecked() == Settings::defaultValue(Settings::Daemon::Elevate).toBool()) &&
-      (ui->cbAutoUpdate->isChecked() == Settings::defaultValue(Settings::Gui::AutoUpdateCheck).toBool()) &&
-      (ui->cbGuiDebug->isChecked() == Settings::defaultValue(Settings::Log::GuiDebug).toBool()) &&
-      (ui->cbShowVersion->isChecked() == Settings::defaultValue(Settings::Gui::ShowVersionInTitle).toBool()) &&
-      (ui->rbIconMono->isChecked() == Settings::defaultValue(Settings::Gui::SymbolicTrayIcon).toBool()) &&
-      (ui->groupService->isChecked() == (processMode == Settings::ProcessMode::Service)) &&
-      (ui->comboInterface->currentIndex() == 0) &&
-      (ui->lineTlsCertPath->text() == Settings::defaultValue(Settings::Security::Certificate).toString()) &&
-      (ui->comboTlsKeyLength->currentText() == Settings::defaultValue(Settings::Security::KeySize).toString()) &&
-      (ui->groupSecurity->isChecked() == Settings::defaultValue(Settings::Security::TlsEnabled).toBool()) &&
-      (ui->cbRequireClientCert->isChecked() == Settings::defaultValue(Settings::Security::CheckPeers).toBool()) &&
-      (ui->lineCommandEnter->text() == Settings::defaultValue(Settings::Core::ComputerEnterCommand).toString()) &&
-      (ui->lineCommandExit->text() == Settings::defaultValue(Settings::Core::ComputerExitCommand).toString()) &&
-      (ui->cbRunEnterCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableEnterCommand).toBool()) &&
-      (ui->cbRunExitCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableExitCommand).toBool()) &&
-      (ui->comboLanguage->currentText() == "English")
-  );
+  return m_voicePage->isDefault() &&
+         ((ui->sbPort->value() == Settings::defaultValue(Settings::Core::Port).toInt()) &&
+          (ui->comboLogLevel->currentIndex() == logLevelIndex) &&
+          (ui->groupLogToFile->isChecked() == Settings::defaultValue(Settings::Log::ToFile).toBool()) &&
+          (ui->lineLogFilename->text() == Settings::defaultValue(Settings::Log::File).toString()) &&
+          (ui->rbAutoHide->isChecked() == Settings::defaultValue(Settings::Gui::Autohide).toBool()) &&
+          (ui->cbPreventSleep->isChecked() == Settings::defaultValue(Settings::Core::PreventSleep).toBool()) &&
+          (ui->rbCloseToTray->isChecked() == Settings::defaultValue(Settings::Gui::CloseToTray).toBool()) &&
+          (ui->cbElevateDaemon->isChecked() == Settings::defaultValue(Settings::Daemon::Elevate).toBool()) &&
+          (ui->cbAutoUpdate->isChecked() == Settings::defaultValue(Settings::Gui::AutoUpdateCheck).toBool()) &&
+          (ui->cbGuiDebug->isChecked() == Settings::defaultValue(Settings::Log::GuiDebug).toBool()) &&
+          (ui->cbShowVersion->isChecked() == Settings::defaultValue(Settings::Gui::ShowVersionInTitle).toBool()) &&
+          (ui->rbIconMono->isChecked() == Settings::defaultValue(Settings::Gui::SymbolicTrayIcon).toBool()) &&
+          (ui->groupService->isChecked() == (processMode == Settings::ProcessMode::Service)) &&
+          (ui->comboInterface->currentIndex() == 0) &&
+          (ui->lineTlsCertPath->text() == Settings::defaultValue(Settings::Security::Certificate).toString()) &&
+          (ui->comboTlsKeyLength->currentText() == Settings::defaultValue(Settings::Security::KeySize).toString()) &&
+          (ui->groupSecurity->isChecked() == Settings::defaultValue(Settings::Security::TlsEnabled).toBool()) &&
+          (ui->cbRequireClientCert->isChecked() == Settings::defaultValue(Settings::Security::CheckPeers).toBool()) &&
+          (ui->lineCommandEnter->text() == Settings::defaultValue(Settings::Core::ComputerEnterCommand).toString()) &&
+          (ui->lineCommandExit->text() == Settings::defaultValue(Settings::Core::ComputerExitCommand).toString()) &&
+          (ui->cbRunEnterCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableEnterCommand).toBool()) &&
+          (ui->cbRunExitCommand->isChecked() == Settings::defaultValue(Settings::Core::EnableExitCommand).toBool()) &&
+          (ui->comboLanguage->currentText() == "English"));
 }
 
 void SettingsDialog::resetToDefault()
 {
+  m_voicePage->resetToDefaults();
   ui->sbPort->setValue(Settings::defaultValue(Settings::Core::Port).toInt());
   ui->comboLogLevel->setCurrentIndex(
       static_cast<int>(LogLevel::fromOption(Settings::defaultValue(Settings::Log::Level).toString()))
@@ -539,3 +567,20 @@ void SettingsDialog::setButtonBoxEnabledButtons() const
 }
 
 SettingsDialog::~SettingsDialog() = default;
+
+void SettingsDialog::refreshVoiceConnection()
+{
+  voice::ConnectionSnapshot snapshot;
+  if (m_core) {
+    snapshot.server = m_core->mode() != Settings::CoreMode::Client;
+    snapshot.ipcAvailable = m_core->hasConnectionSnapshot();
+    snapshot.peerNames = m_core->connectedClients();
+    snapshot.controlConnected =
+        snapshot.ipcAvailable &&
+        (snapshot.server ? !snapshot.peerNames.isEmpty()
+                         : m_core->connectionState() == deskflow::core::ConnectionState::Connected);
+    if (!snapshot.server && snapshot.controlConnected)
+      snapshot.peerNames = {tr("已连接的控制电脑")};
+  }
+  m_voicePage->setConnectionSnapshot(snapshot);
+}

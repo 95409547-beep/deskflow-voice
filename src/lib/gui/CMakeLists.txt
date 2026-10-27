@@ -115,6 +115,12 @@ add_library(${target} STATIC
   widgets/StatusBar.h
   widgets/SettingsDialogButtonBox.cpp
   widgets/SettingsDialogButtonBox.h
+  voice/AudioDeviceQuery.cpp
+  voice/AudioDeviceQuery.h
+  voice/VoicePreferences.cpp
+  voice/VoicePreferences.h
+  voice/VoiceSettingsPage.cpp
+  voice/VoiceSettingsPage.h
 )
 
 target_link_libraries(${target}
@@ -124,3 +130,9 @@ target_link_libraries(${target}
     net
     Qt6::Widgets
 )
+
+if(APPLE)
+  target_link_libraries(${target} PRIVATE "-framework CoreAudio" "-framework CoreFoundation")
+elseif(WIN32)
+  target_link_libraries(${target} PRIVATE ole32 propsys uuid)
+endif()

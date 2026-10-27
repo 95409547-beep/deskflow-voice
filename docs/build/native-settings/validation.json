@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-27",
+  "milestone": "native Qt preferences and read-only device discovery",
+  "branch": "feature/native-voice-settings",
+  "base": "44006400d733b24dddcd60bbe51c0ec348c29c5f",
+  "local_build": {"platform": "macOS ARM64", "qt": "6.11.3", "openssl": "3.6.4", "deployment_target": "15.0", "gui_core_tools": "passed"},
+  "focused_ctest": {
+    "passed": 6,
+    "suites": ["VoiceSessionTests", "VoiceSettingsTests", "OSXKeyStateSafeTests", "TISMainThreadProbe", "TISReadPathsTests", "TISQtRuntimeProbe"],
+    "settings_test_methods": 8,
+    "settings_qtest_total": 10,
+    "windows_full_dialog_methods_skipped": 3,
+    "settings_profile": "temporary",
+    "os_key_injection": false
+  },
+  "audio_probe": {"platform": "CoreAudio", "read_only": true, "supported": true, "inputs": 2, "enumeration_error": false, "names_and_uids_recorded": false, "capture_started": false, "hotplug_subscription": false},
+  "layout_evidence": {"file": "native-dialog.png", "source": "compiled Qt dialog with offscreen platform and temporary profile", "live_desktop_screenshot": false, "final_visual_acceptance": false},
+  "core_ipc": {"structured_getters_wired": true, "live_runtime_verified": false},
+  "voice_service_integrated": false,
+  "windows_build": "verify current branch CI",
+  "existing_deployment_changed": false,
+  "end_to_end_voice_acceptance": false,
+  "installer_or_clean_machine_acceptance": false
+}

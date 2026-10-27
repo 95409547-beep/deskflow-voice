@@ -69,6 +69,9 @@ public:
   {
     return m_connectionState;
   }
+  // These describe the current structured IPC generation, not parsed logs.
+  bool hasConnectionSnapshot() const;
+  QStringList connectedClients() const;
 
   // setters
   void setAddress(const QString &address)
@@ -134,6 +137,9 @@ private:
   FileTail *m_daemonFileTail = nullptr;
   QProcess *m_process = nullptr;
   QString m_appPath;
+  QStringList m_connectedClients;
+  bool m_haveConnectionSnapshot = false;
+  bool m_haveClientSnapshot = false;
 };
 
 } // namespace deskflow::gui

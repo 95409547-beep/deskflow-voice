@@ -25,6 +25,7 @@
 #include <QFile>
 #include <QMetaEnum>
 #include <QMutexLocker>
+#include <QPointer>
 #include <QRegularExpression>
 
 namespace deskflow::gui {
@@ -466,11 +467,21 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
           m_coreIpcClient = new ipc::CoreIpcClient(this);
 
           // queued so a modal dialog opened by a handler can't block readyRead and strand later messages
+          const QPointer<ipc::CoreIpcClient> client = m_coreIpcClient;
           connect(
-              m_coreIpcClient, &ipc::CoreIpcClient::commandReceived, this, &CoreProcess::onCoreIpcMessageReceived,
+              m_coreIpcClient, &ipc::CoreIpcClient::commandReceived, this,
+              [this, client](const QString &command, const QString &args) {
+                if (client && client == m_coreIpcClient && client->isConnected() && isStarted())
+                  onCoreIpcMessageReceived(command, args);
+              },
               Qt::QueuedConnection
           );
-          connect(m_coreIpcClient, &ipc::CoreIpcClient::connected, this, [] {
+          connect(m_coreIpcClient, &ipc::CoreIpcClient::connected, this, [this, client] {
+            if (!client || client != m_coreIpcClient)
+              return;
+            m_connectedClients.clear();
+            m_haveConnectionSnapshot = false;
+            m_haveClientSnapshot = false;
             qDebug("connected to core ipc server");
           });
           connect(m_coreIpcClient, &ipc::CoreIpcClient::connectionFailed, this, [] {
@@ -602,6 +613,10 @@ QPair<bool, QString> CoreProcess::persistServerConfig() const
 
 void CoreProcess::setConnectionState(ConnectionState state)
 {
+  if (state == ConnectionState::Disconnected || state == ConnectionState::Connecting) {
+    m_connectedClients.clear();
+    m_haveClientSnapshot = false;
+  }
   if (m_connectionState == state) {
     return;
   }
@@ -621,7 +636,25 @@ void CoreProcess::setProcessState(ProcessState state)
       qPrintable(processStateToString(m_processState)), qPrintable(processStateToString(state))
   );
   m_processState = state;
+  if (state != ProcessState::Started) {
+    m_connectedClients.clear();
+    m_haveConnectionSnapshot = false;
+    m_haveClientSnapshot = false;
+  }
   Q_EMIT processStateChanged(state);
+}
+
+bool CoreProcess::hasConnectionSnapshot() const
+{
+  return isStarted() && m_coreIpcClient && m_coreIpcClient->isConnected() && m_haveConnectionSnapshot;
+}
+
+QStringList CoreProcess::connectedClients() const
+{
+  return hasConnectionSnapshot() && m_haveClientSnapshot &&
+                 (m_connectionState == ConnectionState::Listening || m_connectionState == ConnectionState::Connected)
+             ? m_connectedClients
+             : QStringList();
 }
 
 void CoreProcess::onCoreIpcMessageReceived(const QString &command, const QString &args)
@@ -634,9 +667,12 @@ void CoreProcess::onCoreIpcMessageReceived(const QString &command, const QString
       qWarning("core ipc got unknown connection state: %s", args.toUtf8().constData());
       return;
     }
+    m_haveConnectionSnapshot = true;
     setConnectionState(state);
   } else if (command == "connectedClients") {
     const auto clients = args.isEmpty() ? QStringList() : args.split(",");
+    m_connectedClients = clients;
+    m_haveClientSnapshot = true;
     Q_EMIT connectedClientsChanged(clients);
   } else if (command == "secureSocket") {
     Q_EMIT secureSocket(true);
