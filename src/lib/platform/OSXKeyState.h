@@ -38,7 +38,19 @@ public:
   Determines which modifier keys have changed and updates the modifier
   state and sends key events as appropriate.
   */
-  void handleModifierKeys(void *target, KeyModifierMask oldMask, KeyModifierMask newMask);
+  void handleModifierKeys(
+      void *target, KeyModifierMask oldMask, KeyModifierMask newMask, CGEventFlags nativeMask, uint32_t virtualKey
+  );
+  // Recover missed modifier releases before forwarding another input event.
+  // Never synthesize presses or release modifiers still present in that event.
+  void releaseStaleModifiers(void *target, CGEventFlags nativeMask);
+  void setRightOptionAsAltGr(bool enabled)
+  {
+    m_rightOptionAsAltGr = enabled;
+  }
+  void sendMappedKeyEvent(
+      void *target, bool press, bool repeat, KeyID key, KeyModifierMask mask, int32_t count, KeyButton button
+  );
 
   //@}
   //! @name accessors
@@ -168,4 +180,5 @@ private:
   bool m_controlRightPressed;
   bool m_altRightPressed;
   bool m_superRightPressed;
+  bool m_rightOptionAsAltGr = false;
 };

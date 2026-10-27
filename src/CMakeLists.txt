@@ -3,10 +3,11 @@
 # SPDX-FileCopyrightText: (C) 2009 - 2012 Nick Bolton
 # SPDX-License-Identifier: MIT
 
+option(BUILD_TESTS "Build tests" ON)
+
 add_subdirectory(lib)
 add_subdirectory(apps)
 
-option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
   add_subdirectory(unittests)
 endif()

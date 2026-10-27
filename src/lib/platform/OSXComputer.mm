@@ -36,6 +36,9 @@
 #include <AppKit/NSEvent.h>
 #include <AvailabilityMacros.h>
 #include <IOKit/hidsystem/event_status_driver.h>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <dispatch/dispatch.h>
 #include <libproc.h>
 #include <mach-o/dyld.h>
@@ -123,6 +126,25 @@ OSXComputer::OSXComputer(IEventQueue *events, bool isPrimary, bool enableLangSyn
   try {
     m_screensaver = new OSXScreenSaver(m_events, getEventTarget());
     m_keyState = new OSXKeyState(m_events, AppUtil::instance().getKeyboardLayoutList(), enableLangSync);
+
+    // Explicit local compatibility for a single configured Windows peer.
+    // A sidecar keeps the original GUI's settings cleaner from deleting
+    // a setting that its unmodified schema does not know about.
+    if (m_isPrimary) {
+      QFile compatibility(Settings::settingsPath() + "/right-option-compat.json");
+      if (compatibility.open(QIODevice::ReadOnly)) {
+        const auto options = QJsonDocument::fromJson(compatibility.readAll()).object();
+        auto peers = Settings::knownComputers();
+        peers.removeAll(Settings::value(Settings::Core::ComputerName).toString());
+        peers.removeDuplicates();
+        const auto targetPeer = options.value("targetPeer").toString();
+        if (options.value("rightOptionAsAltGr").toBool() && peers.size() == 1 && !targetPeer.isEmpty() &&
+            peers.first() == targetPeer) {
+          m_keyState->setRightOptionAsAltGr(true);
+          LOG_INFO("Right Option compatibility enabled for the sole configured peer");
+        }
+      }
+    }
 
     if (Settings::value(Settings::Core::PreventSleep).toBool()) {
       m_powerManager.disableSleep();
@@ -1093,7 +1115,7 @@ bool OSXComputer::onKey(CGEventRef event)
     // get old and new modifier state
     KeyModifierMask oldMask = getActiveModifiers();
     KeyModifierMask newMask = m_keyState->mapModifiersFromOSX(macMask);
-    m_keyState->handleModifierKeys(getEventTarget(), oldMask, newMask);
+    m_keyState->handleModifierKeys(getEventTarget(), oldMask, newMask, macMask, virtualKey);
 
     // if the current set of modifiers exactly matches a modifiers-only
     // hot key then generate a hot key down event.
@@ -1179,7 +1201,7 @@ bool OSXComputer::onKey(CGEventRef event)
 
   // send key events
   for (OSXKeyState::KeyIDs::const_iterator i = keys.begin(); i != keys.end(); ++i) {
-    m_keyState->sendKeyEvent(getEventTarget(), down, isRepeat, *i, sendMask, 1, button);
+    m_keyState->sendMappedKeyEvent(getEventTarget(), down, isRepeat, *i, sendMask, 1, button);
   }
 
   return true;
@@ -1679,6 +1701,18 @@ OSXComputer::handleCGInputEventSecondary(CGEventTapProxy proxy, CGEventType type
 CGEventRef OSXComputer::handleCGInputEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
   OSXComputer *computer = (OSXComputer *)refcon;
+
+  // Only the server captures physical input. Recover a lost modifier release
+  // before queuing the next input, rather than relying on another modifier
+  // press to repair the client's state. Ignore tap lifecycle notifications.
+  if (computer->m_isPrimary &&
+      ((type >= kCGEventLeftMouseDown && type <= kCGEventFlagsChanged) || type == kCGEventScrollWheel ||
+       type == kCGEventOtherMouseDown || type == kCGEventOtherMouseUp || type == kCGEventOtherMouseDragged)) {
+    // Synthetic mouse events can omit flags. A key still down at the HID
+    // source must also be preserved, even if this event has no modifier bits.
+    const CGEventFlags held = CGEventGetFlags(event) | CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState);
+    computer->m_keyState->releaseStaleModifiers(computer->getEventTarget(), held);
+  }
 
   switch (type) {
   case kCGEventLeftMouseDown:

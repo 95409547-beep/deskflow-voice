@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Deskflow Voice contributors -->
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Deskflow Voice · 跨设备语音交互原型</title>
+  <link rel="stylesheet" href="prototype.css">
+  <script src="prototype.js" defer></script>
+</head>
+<body>
+  <div class="preview-shell">
+    <header class="preview-toolbar">
+      <div><strong>Deskflow Voice</strong><span class="prototype-tag">交互原型 v0.2</span></div>
+      <div class="preview-options">
+        <label>查看本机<select id="preview-platform"><option value="mac">Mac 电脑</option><option value="windows">Windows 电脑</option></select></label>
+        <label>演示场景<select id="preview-scene"><option value="ready">已设置，可使用</option><option value="first">首次安装</option><option value="offline">对端离线</option><option value="mic">声音来源不可用</option><option value="cable">接收音频组件缺失</option><option value="ime">豆包版本不兼容</option></select></label>
+      </div>
+    </header>
+    <p class="preview-notice"><span class="notice-dot"></span>交互演示 · 使用模拟数据，不连接真实设备。</p>
+    <section class="app-window" aria-label="Deskflow 首选项原型">
+      <div class="window-chrome"><span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span><span>Deskflow — 首选项</span><span id="platform-label">macOS</span></div>
+      <nav class="settings-tabs" aria-label="首选项分类">
+        <button disabled title="沿用 Deskflow 现有设置">常规</button><button disabled title="沿用 Deskflow 现有设置">窗口</button><button disabled title="沿用 Deskflow 现有设置">日志</button><button disabled title="沿用 Deskflow 现有设置">网络</button><button disabled title="沿用 Deskflow 现有设置">高级</button><button class="selected" aria-current="page">跨设备语音</button>
+      </nav>
+      <main id="voice-page"></main>
+      <footer class="app-footer"><button class="text-button" data-action="diagnostics">帮助</button><span id="save-note" aria-live="polite"></span><div id="settings-actions"><button data-action="cancel" id="cancel-settings" disabled>取消更改</button><button class="primary" data-action="save" id="save-settings" disabled>保存</button></div></footer>
+    </section>
+    <p class="preview-caption">界面原型 v0.2 · 尚未接入真实语音服务</p>
+  </div>
+  <dialog id="flow-dialog" aria-labelledby="dialog-title"><div id="dialog-content"></div></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "repository": "https://github.com/deskflow/deskflow",
+    "version": "1.27.0",
+    "commit": "081f6478e654a112168879e67a41ce7d7e4ae3af"
+  },
+  "foundation": {
+    "cxx_standard": 20,
+    "qt_sdk": "6.11.3",
+    "qt_archives": ["qtbase", "qtdeclarative", "qtsvg", "qttools", "qttranslations"],
+    "windows_component_dotnet_sdk": "10.0.400 (latestPatch)",
+    "openssl": {
+      "version": "3.6.4",
+      "source": "https://github.com/openssl/openssl/releases/tag/openssl-3.6.4",
+      "archive_sha256": "9bffaa1ad1e07b354c21bd3324ec02fa15579f45a7d0494b3e74bc449b7333ef",
+      "macos_build_target": "15.0",
+      "minimum_os_runtime_validated": false
+    }
+  },
+  "not_bundled": [
+    {"name": "SiriRemoteForge", "status": "separate device/license review"},
+    {"name": "PacketLogger", "status": "official user acquisition; redistribution unresolved"},
+    {"name": "Doubao IME and rpc.dll", "status": "installed by user; version adapter pending"},
+    {"name": "VB-CABLE", "status": "official installation guide; redistribution review required"}
+  ],
+  "release_ready": false
+}

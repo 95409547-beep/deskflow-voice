@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: (C) 2026 Deskflow Voice contributors
+# SPDX-License-Identifier: MIT
+cmake==4.4.4
+ninja==1.13.2
+aqtinstall==3.3.0
+clang-format==20.1.0
+reuse==6.2.0
