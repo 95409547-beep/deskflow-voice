@@ -7,7 +7,7 @@
   const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5"/></svg>';
   const micIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="8" y="2" width="8" height="13" rx="4"/><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-4 0h8"/></svg>';
   const defaults = platform => ({platform, role:platform === 'mac' ? 'send' : 'receive', enabled:true, configured:true, paired:true, source:'system', sourceVerified:true, key:platform === 'mac' ? '右 Option' : 'F8', startup:true, sender:'mac'});
-  let config = defaults('mac'), baseline = {...config}, fault = '', guideReason = '', modal = null, wizard = null, test = null, noticeTimer;
+  let config = defaults('mac'), baseline = {...config}, fault = '', guideReason = '', modal = null, wizard = null, quick = null, view = 'home', test = null, noticeTimer;
   const timers = new Set();
   const later = (fn, ms) => {const id=setTimeout(() => {timers.delete(id);fn();},ms);timers.add(id);return id;};
   const clearTimers = () => {timers.forEach(clearTimeout);timers.clear();};
@@ -32,15 +32,35 @@
   }
   function render(){
     const i=issue(), send=config.role==='send';
+    const ready=config.enabled&&config.configured&&config.paired&&!fault&&(!send||config.sourceVerified);
     document.querySelector('.app-window').classList.toggle('windows',config.platform==='windows');
     $('platform-label').textContent=config.platform==='mac'?'macOS':'Windows';
-    const banner=`<div class="status-banner ${i.kind}" role="status"><span class="status-icon" aria-hidden="true">${i.kind==='warning'?'!':i.kind==='off'?'–':'✓'}</span><div class="status-copy"><strong>${i.title}</strong><p>${i.detail}</p></div>${i.action?button(i.label,i.action):''}</div>`;
-    const role=`<div class="group-row"><div class="row-label">本机用途</div><div class="row-body"><div class="segmented" aria-label="本机用途"><button data-action="role-send" class="${send?'active':''}" aria-pressed="${send}">发送声音</button><button data-action="role-receive" class="${!send?'active':''}" aria-pressed="${!send}" ${config.platform==='mac'?'disabled title="首版仅支持 Windows 接收语音"':''}>接收语音</button></div>${config.platform==='mac'?'<p>首版支持发送到 Windows，Mac 接收将在后续版本提供。</p>':'<p>发送到另一台 Windows，或接收另一台电脑的声音。</p>'}</div></div>`;
-    const peer=`<div class="group-row"><div class="row-label">${send?'发送到':'接受来自'}</div><div class="row-body"><div class="pair-line">${device(send?ownName():senderName())}<span class="route-arrow" aria-hidden="true"></span>${device(send?'Windows 书房':ownName())}</div><p>${config.paired?(fault==='offline'?'对端当前离线':'设备身份已确认 · '+(send?'跟随 Deskflow 当前控制位置':'仅接受已配对设备')):'尚未确认设备身份'}</p></div><div class="row-actions">${button('管理设备','pair')}</div></div>`;
-    const input=`<div class="group"><div class="group-row"><div class="row-label">声音来源</div><div class="row-body"><strong>${sourceLabel()}</strong><p>${config.source==='siri'?'遥控器配对在本机，声音随你跨屏。':'使用本机已有麦克风，无需额外配对。'}</p><div class="voice-meta"><div class="level"><span></span></div><span>空闲 · 按住时才收音</span></div></div><div class="row-actions">${button('选择','source')}</div></div><div class="group-row"><div class="row-label">按住说话</div><div class="row-body"><kbd>${esc(config.key)}</kbd><p>按住开始，松开停止；切换输入位置后，新一轮自动跟随。</p></div><div class="row-actions">${button('更改','shortcut')}</div></div>${config.source==='siri'?`<div class="group-row"><div class="row-label">遥控器组件</div><div class="row-body">${status(fault==='mic'||!config.sourceVerified?'需要检查':'已就绪',fault==='mic'||!config.sourceVerified)}<p>系统配对、收音组件和设备按键。</p></div><div class="row-actions">${button('查看','components')}</div></div>`:''}</div>`;
-    const receive=`<div class="group"><div class="group-row"><div class="row-label">语音输入法</div><div class="row-body"><strong>豆包输入法</strong><p>${fault==='ime'?'当前版本未通过兼容验证':'已检测到受支持的输入法（演示）'}</p></div><div class="row-actions">${status(fault==='ime'?'需要处理':'已就绪',fault==='ime')}</div></div><div class="group-row"><div class="row-label">接收音频</div><div class="row-body"><strong>跨设备语音接收音频</strong><p>仅配置豆包使用的录音设备，保留系统默认麦克风。</p></div><div class="row-actions">${status(fault==='cable'?'缺少组件':'已就绪',fault==='cable')}</div></div><div class="group-row"><div class="row-label">输入位置</div><div class="row-body"><strong>跟随本机当前输入位置</strong><p>无需逐个登记应用；每次按下重新确认输入位置。</p></div></div></div>`;
-    page.innerHTML=`<div class="page"><header class="feature-header"><div><h1>跨设备语音</h1><p>共用一个麦克风，在另一台电脑上输入。</p></div><label class="switch-label"><input id="feature-enabled" class="switch" type="checkbox" role="switch" ${config.enabled?'checked':''}>启用</label></header>${banner}${!config.configured?`<div class="group empty-state"><div class="empty-icon">${micIcon}</div><h2>把声音带到另一台电脑</h2><p>先连接 Deskflow，再选择声音来源与说话键。接收端所需的组件会逐项引导。</p>${button('设置跨设备语音','setup',true)}<p class="scope-note">普通麦克风可直接使用；Siri 遥控器有独立的设备设置流程。</p></div>`:`<div class="group">${role}${peer}</div>${send?input:receive}<div class="main-actions">${button(send?'测试语音':'测试接收','test',true,!!fault||!config.enabled||!config.paired||(send&&!config.sourceVerified))}${button('设备与组件设置','components')}${button('重新设置','setup')}</div><label class="startup-row"><input id="login-startup" type="checkbox" ${config.startup?'checked':''}><span>登录后自动准备语音<small>等待设备与对端就绪，无需每次手动启动。</small></span></label>`}</div>`;
-    $('save-settings').disabled=!dirty();$('cancel-settings').disabled=!dirty();$('save-note').textContent=dirty()?'有未保存的更改':'';
+    const heading=`<header class="feature-header"><h1>跨设备语音</h1><label class="switch-label"><input id="feature-enabled" class="switch" type="checkbox" role="switch" ${config.enabled?'checked':''}>${config.enabled?'已开启':'已关闭'}</label></header>`;
+    const tabs=`<nav class="voice-tabs" aria-label="语音页面">${[['home','使用'],['devices','设备'],['settings','设置']].map(([key,label])=>`<button data-action="page-${key}" class="${view===key?'active':''}" aria-current="${view===key?'page':'false'}">${label}</button>`).join('')}</nav>`;
+    const route=`<div class="pair-line">${device(send?ownName():senderName())}<span class="route-arrow" aria-hidden="true"></span>${device(send?'Windows 书房':ownName())}</div>`;
+    const row=(label,body,action='')=>`<div class="group-row"><div class="row-label">${label}</div><div class="row-body">${body}</div>${action?`<div class="row-actions">${action}</div>`:''}</div>`;
+    let body='';
+    if(view==='home'){
+      const title=ready?'已就绪':!config.configured?'说话，就在另一台电脑输入':!config.enabled?'开启跨设备语音':i.title;
+      const hint=ready?(send?`按住 <kbd>${config.source==='siri'?'遥控器语音键':esc(config.key)}</kbd> 说话，松开结束。`:`在 ${senderName()} 按住说话，这里直接输入。`):!config.configured?(send?'默认使用本机麦克风。':'自动检查接收端组件。'):i.detail;
+      const action=!config.enabled?'enable-service':!config.configured||!config.paired?'quick-start':fault?'repair':!ready?'components':'test';
+      const label=!config.enabled?'开启语音':!config.configured||!config.paired?'开始使用':fault?'解决问题':!ready?'检查来源':'试一下';
+      body=`<section class="home-stage ${fault?'has-issue':''}" aria-label="语音使用"><div class="home-route">${route}</div><div class="home-mic ${ready?'ready':''}" aria-hidden="true">${micIcon}</div><h2 role="status">${title}</h2><p class="home-hint">${hint}</p><div class="home-action">${button(label,action,true)}</div><button class="text-button" data-action="page-devices">查看设备</button></section>`;
+    }
+    if(view==='devices'){
+      const roles=`<div class="segmented" aria-label="本机用途"><button data-action="role-send" class="${send?'active':''}" aria-pressed="${send}">发送声音</button><button data-action="role-receive" class="${!send?'active':''}" aria-pressed="${!send}" ${config.platform==='mac'?'disabled title="首版仅支持 Windows 接收语音"':''}>接收语音</button></div>`;
+      body=`<div class="group">${row('本机用途',roles)}${row(send?'发送到':'接受来自',`${route}<span class="compact-note">${config.paired?(fault==='offline'?'离线':'已配对'):'未配对'}</span>`,button('管理','pair'))}</div>`;
+      body+=send?`<div class="group">${row('声音来源',`<strong>${sourceLabel()}</strong>${!config.sourceVerified?'<span class="compact-note">需要检查</span>':''}`,button('更换','source'))}${config.source==='siri'?row('遥控器组件',status(fault==='mic'||!config.sourceVerified?'需要检查':'已就绪',fault==='mic'||!config.sourceVerified),button('查看','components')):''}</div>`:`<div class="group">${row('语音输入','豆包输入法',status(fault==='ime'?'待兼容':'已就绪',fault==='ime'))}${row('接收音频','跨设备语音音频',status(fault==='cable'?'缺少组件':'已就绪',fault==='cable'))}${row('输入位置','当前输入框')}</div>`;
+      if(!config.paired||fault||!config.sourceVerified&&send)body+=`<div class="inline-problem"><span>${i.title}</span>${button('处理','repair')}</div>`;
+      body+=`<button class="text-button" data-action="components">检查设备与组件</button>`;
+    }
+    if(view==='settings'){
+      body=`<div class="group">${send?row('按住说话',`<kbd>${esc(config.key)}</kbd>`,button('更改','shortcut')):''}${row('自动准备',`<label class="check-label"><input id="login-startup" type="checkbox" ${config.startup?'checked':''}>登录后自动启动</label>`)}</div><details class="advanced-options"><summary>更多选项</summary><div class="advanced-links">${button('设备与组件','components')}${button('完整设置向导','setup')}${button('诊断信息','diagnostics')}</div></details>`;
+    }
+    page.innerHTML=`<div class="page page-${view}">${heading}${tabs}${body}</div>`;
+    $('save-settings').disabled=!dirty();$('cancel-settings').disabled=!dirty();$('save-note').textContent=dirty()?'更改未保存':'';
+    $('settings-actions').hidden=view==='home'&&!dirty();
+    document.querySelector('.app-footer').classList.toggle('compact-footer',view==='home'&&!dirty());
   }
   function shell(title, subtitle, body, footer='', steps=''){
     content.innerHTML=`<header class="dialog-header"><div><h2 id="dialog-title">${title}</h2><p>${subtitle}</p></div><button class="close-button" data-action="close-dialog" aria-label="关闭">×</button></header>${steps}<div class="dialog-body">${body}</div>${footer?`<footer class="dialog-footer">${footer}</footer>`:''}`;
@@ -48,12 +68,15 @@
   function open(kind){clearTimers();modal=kind;test=null;if(!dialog.open)dialog.showModal();drawModal();}
   function close(){
     clearTimers();
+    if(modal==='test'&&test?.fromQuick){test=null;modal='quick';drawQuick();return;}
     if(modal==='test'&&test?.fromWizard){test=null;modal='wizard';drawWizard();return;}
+    if(quick&&!quick.completed){config={...quick.previous};fault=quick.previousFault;}
     if(wizard&&!wizard.completed){config={...wizard.previous};fault=wizard.previousFault;}
-    test=null;modal=null;wizard=null;dialog.close();render();
+    test=null;modal=null;wizard=null;quick=null;dialog.close();render();
   }
   function checks(items){return `<ul class="check-list">${items.map(([label,ok,action])=>`<li><span><i class="check-icon ${ok?'ok':'bad'}">${ok?'✓':'!'}</i>${label}</span>${action?button(ok?'查看':'处理',action):status(ok?'已就绪':'待处理',!ok)}</li>`).join('')}</ul>`;}
   function drawModal(){
+    if(modal==='quick'){drawQuick();return;}
     if(modal==='wizard'){drawWizard();return;}
     if(modal==='test'){drawTest();return;}
     if(modal==='source'){
@@ -76,6 +99,27 @@
     const siri=config.platform==='mac'&&config.role==='send'&&config.source==='siri';
     shell(modal==='repair'?'检查与修复':'设备与组件设置','逐项检查，缺少哪一项就处理哪一项。',`${checks([['两台电脑已连接',fault!=='offline','guide-offline'],['发送端声音来源',fault!=='mic'&&(config.role!=='send'||config.sourceVerified),'guide-mic'],['Windows 豆包输入法',fault!=='ime','guide-ime'],['Windows 接收音频组件',fault!=='cable','guide-cable']])}${siri?`<div class="dialog-section"><h3>Siri 遥控器增强组件</h3>${checks([['遥控器已在 Mac 系统配对',fault!=='mic'&&config.sourceVerified],['专用收音组件',fault!=='mic'&&config.sourceVerified],['PacketLogger 检查',fault!=='mic'&&config.sourceVerified]])}<p class="small">普通麦克风无需这些增强组件。缺少它们只影响 Siri 声源。</p></div>`:''}<p class="note">设备与检测状态为原型演示。正式产品按权限和官方安装流程处理第三方组件。</p>`,`${config.role==='send'?button('选择声音来源','source'):button('管理设备','pair')}<div class="right">${config.role==='send'&&!config.sourceVerified?button('模拟来源检查通过','verify-source',true):button('完成','close-dialog',true)}</div>`);
   }
+  function quickStart(){
+    quick={previous:{...config},previousFault:fault,completed:false};
+    open('quick');
+  }
+  function drawQuick(){
+    const send=config.role==='send';let body='',footer='';
+    if(!config.paired){
+      body=`<div class="quick-intro"><span class="device-icon">${icon}</span><h3>连接 ${send?'Windows 书房':senderName()}</h3></div><div class="pair-code"><span>确认两端代码一致</span><strong>482 619</strong></div>`;
+      footer=`${button('稍后','close-dialog')}<div class="right">${button('确认并继续','quick-pair',true)}</div>`;
+    }else if(fault){
+      body=`<div class="quick-intro"><h3>${issue().title}</h3><p>${issue().detail}</p></div>`;
+      footer=`${button('稍后','close-dialog')}<div class="right">${button('查看解决方法','quick-repair',true)}</div>`;
+    }else if(send&&!config.sourceVerified){
+      body=`<div class="quick-intro"><span class="device-icon">${micIcon}</span><h3>${config.source==='siri'?'检查 Siri 声源':'允许使用麦克风'}</h3><p>${config.source==='siri'?'需要确认遥控器配对及专用收音组件。':'使用 '+sourceLabel()+'。'}</p></div>`;
+      footer=`${button('稍后','close-dialog')}<div class="right">${button(config.source==='siri'?'检查并继续':'允许并继续','quick-prepare',true)}</div>`;
+    }else{
+      body=`<div class="quick-intro"><span class="status-icon">✓</span><h3>准备好了，试说一句</h3><p>最后确认出字和松开停止。</p></div>`;
+      footer=`${button('稍后','close-dialog')}<div class="right">${button('试一下','quick-test',true)}</div>`;
+    }
+    shell('开始使用','仅在需要时补齐这一步。所有结果为演示。',body,footer);
+  }
   function setup(){wizard={step:0,paired:config.paired,prepared:config.configured&&!fault&&(config.role==='receive'||config.sourceVerified),tested:false,previous:{...config},previousFault:fault};open('wizard');}
   function wizardSteps(){return `<ol class="steps" aria-label="设置进度">${['选择用途','连接设备','准备声音','按键与启动','测试完成'].map((s,i)=>`<li class="${i===wizard.step?'current':i<wizard.step?'done':''}" ${i===wizard.step?'aria-current="step"':''}><b>${i<wizard.step?'✓':i+1}</b>${s}</li>`).join('')}</ol>`;}
   function drawWizard(){
@@ -89,12 +133,12 @@
     const nextDisabled=!allowed||(step===2&&!wizard.prepared)||(step===4&&!wizard.tested);
     shell('设置跨设备语音',`${config.platform==='mac'?'Mac':'Windows'} · ${send?'声音发送端':'语音接收端'}`,body,`${step>0?button('上一步','wizard-back'):button('取消','close-dialog')}<div class="right">${button(step===4?'完成设置':'下一步',step===4?'wizard-finish':'wizard-next',true,nextDisabled)}</div>`,wizardSteps());
   }
-  function startTest(fromWizard=false){test={stage:'idle',rounds:0,text:'',fromWizard,held:false,confirmed:false};modal='test';if(!dialog.open)dialog.showModal();drawTest();}
+  function startTest(fromWizard=false,fromQuick=false){test={stage:'idle',rounds:0,text:'',fromWizard,fromQuick,held:false,confirmed:false};modal='test';if(!dialog.open)dialog.showModal();drawTest();}
   function drawTest(){
     const done=test.stage==='done',held=test.held,passed=held?3:done?4:0;
     const labels=['声音来源','声音到达','语音启动','出字与停止'];
-    const message=held?'正在接收声音 · 松开后停止':done?'录音已停止，演示文字已进入测试框':'按住下方按钮，演示一次说话流程';
-    shell('测试跨设备语音','演示测试框只显示预设文字，不录音、不识别、不向其他应用输入。',`<div class="test-checks">${labels.map((n,i)=>`<div class="test-step ${i<passed?'done':''}"><i class="check-icon ${i<passed?'ok':''}">${i<passed?'✓':i+1}</i>${n}</div>`).join('')}</div><div class="test-console"><div class="test-status" id="test-status" role="status">${message}</div><div class="level test-level ${held?'active':''}"><span></span></div><button class="hold-button ${held?'holding':'primary'}" id="hold-to-talk" aria-label="按住演示说话">${held?'正在演示说话，松开停止':'按住演示说话'}</button><p class="small">鼠标 / 触摸按住，或聚焦按钮后按住空格。</p><textarea aria-label="演示输入结果" readonly placeholder="演示文字会出现在这里">${esc(test.text)}</textarea></div>${done?`<p class="note">已完成 ${test.rounds} 轮演示。可以继续按住再试一轮。</p>`:'<p class="note">正式产品在用户当前输入位置验收；这里的演示不表示设备已连接或真实语音已通过。</p>'}`,`${button('重新开始','test-reset')}<div class="right">${button(done?'确认出字且已停止':'关闭',done?'test-confirm':'close-dialog',done)}</div>`);
+    const message=held?'正在接收声音 · 松开后停止':done?'录音已停止，演示文字已进入测试框':'按住说话，松开停止。';
+    shell('测试跨设备语音','演示模式，不访问麦克风。',`<details class="test-details"><summary>查看检测过程</summary><div class="test-checks">${labels.map((n,i)=>`<div class="test-step ${i<passed?'done':''}"><i class="check-icon ${i<passed?'ok':''}">${i<passed?'✓':i+1}</i>${n}</div>`).join('')}</div></details><div class="test-console"><div class="test-status" id="test-status" role="status">${message}</div><div class="level test-level ${held?'active':''}"><span></span></div><button class="hold-button ${held?'holding':'primary'}" id="hold-to-talk" aria-label="按住演示说话">${held?'正在演示说话，松开停止':'按住演示说话'}</button><p class="small">按住按钮，或按住空格。</p><textarea aria-label="演示输入结果" readonly placeholder="演示文字会出现在这里">${esc(test.text)}</textarea></div>${done?`<p class="small test-round">已完成 ${test.rounds} 轮演示，可继续试说。</p>`:''}`,`${button('重新开始','test-reset')}<div class="right">${button(done?'已出字，完成':'关闭',done?'test-confirm':'close-dialog',done)}</div>`);
   }
   function holdStart(){
     if(!test||test.held||test.stage==='finishing')return;
@@ -115,11 +159,19 @@
     const element=event.target.closest('[data-action]');if(!element||element.disabled)return;
     const action=element.dataset.action;
     if(action==='close-dialog'){close();return;}
+    if(action.startsWith('page-')){view=action.slice(5);render();return;}
+    if(action==='enable-service'){config.enabled=true;baseline.enabled=true;if(!config.configured)quickStart();render();return;}
+    if(action==='quick-start'){quickStart();return;}
+    if(action==='quick-pair'){config.paired=true;drawQuick();return;}
+    if(action==='quick-prepare'){config.sourceVerified=true;drawQuick();return;}
+    if(action==='quick-test'){startTest(false,true);return;}
+    if(action==='quick-repair'){guideReason=fault;modal='guide';drawModal();return;}
     if(action==='role-send'||action==='role-receive'){chooseRole(action==='role-send'?'send':'receive');return;}
     if(action==='save'){baseline={...config};render();toast('演示设置已保存');return;}
     if(action==='cancel'){config={...baseline};render();return;}
     if(action==='setup'){setup();return;}
     if(action==='test'){startTest();return;}
+    if(action==='repair'&&quick){modal='quick';drawQuick();return;}
     if(['repair','components','source','pair','diagnostics','shortcut'].includes(action)){open(action);return;}
     if(action==='use-source'){const value=$('source-choice').value;if(config.source!==value){config.source=value;config.sourceVerified=false;}close();return;}
     if(action==='verify-source'){config.sourceVerified=true;drawModal();render();return;}
@@ -128,7 +180,7 @@
     if(action==='confirm-pair'){config.paired=true;drawModal();render();return;}
     if(action.startsWith('guide-')){guideReason=action.slice(6);open('guide');return;}
     if(action==='guide'){guideReason=fault;open('guide');return;}
-    if(action==='simulate-repair'){element.disabled=true;element.textContent='正在演示检测…';later(()=>{fault='';$('preview-scene').value='ready';open('components');render();toast('演示检测完成');},650);return;}
+    if(action==='simulate-repair'){element.disabled=true;element.textContent='正在演示检测…';later(()=>{fault='';$('preview-scene').value='ready';if(quick){modal='quick';drawQuick();}else open('components');render();toast('演示检测完成');},650);return;}
     if(action==='wizard-pair'){wizard.paired=true;drawWizard();return;}
     if(action==='wizard-prepare'){element.disabled=true;element.textContent='正在演示检测…';later(()=>{wizard.prepared=true;config.sourceVerified=true;fault='';drawWizard();},650);return;}
     if(action==='wizard-preparation'){wizard.showPreparation=!wizard.showPreparation;drawWizard();return;}
@@ -136,14 +188,14 @@
     if(action==='wizard-back'){wizard.step=Math.max(0,wizard.step-1);drawWizard();return;}
     if(action==='wizard-test'){startTest(true);return;}
     if(action==='wizard-finish'){config.configured=true;config.enabled=true;config.paired=wizard.paired;wizard.completed=true;baseline={...config};$('preview-scene').value='ready';close();toast('设置演示完成，已回到语音主页面');return;}
-    if(action==='test-reset'){const fromWizard=test.fromWizard;clearTimers();startTest(fromWizard);return;}
-    if(action==='test-confirm'){if(test?.stage!=='done')return;const fromWizard=test.fromWizard;test=null;if(fromWizard){wizard.tested=true;modal='wizard';drawWizard();}else{close();toast('演示测试已确认');}return;}
+    if(action==='test-reset'){const fromWizard=test.fromWizard,fromQuick=test.fromQuick;clearTimers();startTest(fromWizard,fromQuick);return;}
+    if(action==='test-confirm'){if(test?.stage!=='done')return;const fromWizard=test.fromWizard,fromQuick=test.fromQuick;test=null;if(fromQuick){quick.completed=true;config.configured=true;config.enabled=true;baseline={...config};$('preview-scene').value='ready';close();toast('已准备就绪');}else if(fromWizard){wizard.tested=true;modal='wizard';drawWizard();}else{close();toast('演示测试已确认');}return;}
   });
   document.addEventListener('change',event=>{
     const el=event.target;
-    if(el.id==='preview-platform'){clearTimers();test=null;wizard=null;modal=null;if(dialog.open)dialog.close();config=defaults(el.value);baseline={...config};fault='';$('preview-scene').value='ready';render();}
-    if(el.id==='preview-scene'){clearTimers();test=null;wizard=null;modal=null;if(dialog.open)dialog.close();fault=el.value==='ready'||el.value==='first'?'':el.value;config.configured=el.value!=='first';config.paired=el.value!=='first';config.sourceVerified=el.value!=='first';if(el.value==='first'){config.source='system';config.sourceVerified=false;}config.enabled=true;baseline={...config};render();}
-    if(el.id==='feature-enabled'){config.enabled=el.checked;render();}
+    if(el.id==='preview-platform'){clearTimers();test=null;wizard=null;quick=null;modal=null;view='home';if(dialog.open)dialog.close();config=defaults(el.value);baseline={...config};fault='';$('preview-scene').value='ready';render();}
+    if(el.id==='preview-scene'){clearTimers();test=null;wizard=null;quick=null;modal=null;view='home';if(dialog.open)dialog.close();fault=el.value==='ready'||el.value==='first'?'':el.value;config.configured=el.value!=='first';config.paired=el.value!=='first';config.sourceVerified=el.value!=='first';if(el.value==='first'){config.source='system';config.sourceVerified=false;}config.enabled=true;baseline={...config};render();}
+    if(el.id==='feature-enabled'){config.enabled=el.checked;baseline.enabled=el.checked;if(config.enabled&&!config.configured)quickStart();render();}
     if(el.id==='login-startup'){config.startup=el.checked;render();}
     if(el.id==='sender-choice'){config.sender=el.value;drawModal();render();}
     if(el.name==='wizard-role'){config.role=el.value;wizard.tested=false;drawWizard();}

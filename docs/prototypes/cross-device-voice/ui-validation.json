@@ -1,104 +1,110 @@
 {
   "date": "2026-10-27",
-  "method": "CUA native browser interaction and accessibility state checks",
-  "scope": "Offline UI prototype only; no real audio, pairing, IME, or deployment validation",
+  "prototypeRevision": "v0.2",
+  "scope": "UI simulation only; no real device/voice/deployment validation",
+  "method": "CUA native browser controls, accessibility snapshots and read-only DOM checks",
   "checks": [
     {
-      "name": "Mac 接收不可选",
+      "name": "首页只保留使用状态和入口",
       "passed": true
     },
     {
-      "name": "Windows 接收页面",
+      "name": "设备页保留角色与来源",
       "passed": true
     },
     {
-      "name": "Windows 到 Windows 使用普通麦克风",
+      "name": "Mac 接收仍不可选",
       "passed": true
     },
     {
-      "name": "Windows 默认按键 F8",
+      "name": "按键与自启移到设置页",
       "passed": true
     },
     {
-      "name": "未确认身份时禁止测试",
+      "name": "首次只询问必要配对",
       "passed": true
     },
     {
-      "name": "未知输入法显示兼容说明",
+      "name": "需要时才请求声音准备",
       "passed": true
     },
     {
-      "name": "未知版本不提供一键假定兼容",
+      "name": "准备后直接试说，无固定五步",
       "passed": true
     },
     {
-      "name": "查看说明后仍保留兼容故障",
+      "name": "检测细节默认折叠",
       "passed": true
     },
     {
-      "name": "缺组件时禁止测试接收",
+      "name": "首次试说松开后显示演示文字",
       "passed": true
     },
     {
-      "name": "缺组件给出接收音频安装步骤",
+      "name": "轻量流程连续两轮完成",
       "passed": true
     },
     {
-      "name": "缺组件的演示处理能返回就绪检查",
+      "name": "完成后回到简洁就绪首页",
       "passed": true
     },
     {
-      "name": "更换声源需要独立检查",
+      "name": "Windows 首页直接显示接收用法",
       "passed": true
     },
     {
-      "name": "新声源检查前禁止测试",
+      "name": "Windows 接收组件移至设备页",
       "passed": true
     },
     {
-      "name": "Siri 检查后显示增强组件",
+      "name": "Windows 发送仍使用 F8",
       "passed": true
     },
     {
-      "name": "取消恢复原来的普通声源",
+      "name": "只有异常才显示具体问题和处理入口",
       "passed": true
     },
     {
-      "name": "取消后无待保存改动",
+      "name": "未知版本依然保留兼容阻断",
       "passed": true
     },
     {
-      "name": "离线提示等待对端并禁止测试",
+      "name": "更换声源不复用旧检查",
       "passed": true
     },
     {
-      "name": "离线测试按钮禁用",
+      "name": "取消轻量设置返回首页",
       "passed": true
     },
     {
-      "name": "最终源码第一轮松开后出字",
+      "name": "未完成的配对不会冒充成功",
       "passed": true
     },
     {
-      "name": "新一轮进行时不能提前确认",
+      "name": "首页一键关闭",
       "passed": true
     },
     {
-      "name": "最终源码连续两轮都出字并停止",
+      "name": "已配置设备一键恢复，无重复向导",
       "passed": true
     },
     {
-      "name": "首次安装场景能切回完整就绪场景",
+      "name": "二级设置仍能取消更改",
+      "passed": true
+    },
+    {
+      "name": "无 JavaScript 运行异常",
       "passed": true
     }
   ],
-  "manualWizardWalkthrough": "Initial install through identity confirmation, preparation, two simulated rounds and explicit completion passed; ordinary microphone default",
   "screenshots": [
     "mac-sender.png",
     "mac-siri-sender.png",
     "windows-receiver.png",
+    "devices.png",
+    "settings.png",
+    "quick-connect.png",
     "repair.png",
     "test-input.png"
-  ],
-  "prototypeRevision": "v0.1"
+  ]
 }

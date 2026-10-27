@@ -7,12 +7,12 @@ Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Wi
 ## 已落地
 
 - 基于 Deskflow v1.27.0 固化独立开发目录，保留上游历史与版权。
-- 迁移 Mac 右 Option 与 TIS 主线程访问修复及对应检查。
+- 迁移 Mac 右 Option、TIS 主线程访问与漏松键自动恢复修复及对应检查。
 - 新增可独立构建的 C++20 会话状态机：两种发送端、Windows 接收端、重复会话、松开、焦点变化、断线与迟到消息处理。
 - 新增跨平台会话 CI，以及 Windows 组件构建、纯托管检查和独立运行库发布检查。
 - 迁移 Windows 接收与输入法适配源码；默认显示帮助，仅开放 82 项纯托管检查，真实语音入口尚未接通。
 - 两端原型源码已作内部快照；公开组件已移除个机路径、设备标识、凭据和运行记录。
-- 新增离线可点击的语音设置原型：发送/接收视图、首次设置向导、组件修复与连续输入演示；原生 Qt 界面尚未接入。
+- 新增 v0.2 离线交互原型：“使用 / 设备 / 设置”分页、按需开始、问题修复与连续输入演示；原生 Qt 界面尚未接入。
 
 ## 检查公共会话模块
 
@@ -30,6 +30,7 @@ ctest --test-dir build/voice -C Release --output-on-failure
 - [会话接口与边界](docs/architecture/voice-session.md)
 - [首批技术与许可决策](docs/adr/0001-foundation.md)
 - [Mac 完整源码构建](docs/build/macos.md)
+- [漏松键恢复与安全检查入口](docs/build/modifier-recovery.md)
 - [Windows 独立组件构建](components/windows-voice/README.md)
 - [本批工程验证记录](docs/build/foundation-validation.md)
 - [语音界面交互原型与设计说明](docs/prototypes/cross-device-voice/README.md)
