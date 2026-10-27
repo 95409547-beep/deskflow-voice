@@ -66,6 +66,11 @@ add_subdirectory(net)
 add_subdirectory(platform)
 add_subdirectory(server)
 
+if(TARGET VoiceSessionTests)
+  add_test(NAME VoiceSessionTests COMMAND $<TARGET_FILE:VoiceSessionTests>)
+  set_property(GLOBAL APPEND PROPERTY ${CMAKE_PROJECT_NAME}_tests VoiceSessionTests)
+endif()
+
 #make sure to use CI only plugin on Unix
 if (UNIX AND NOT APPLE)
   set(qPA_Platform "QT_QPA_PLATFORM=minimal")

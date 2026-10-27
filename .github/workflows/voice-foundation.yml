@@ -1,0 +1,21 @@
+name: Voice foundation
+on:
+  push:
+    branches: [main, 'feature/**']
+    paths: ['src/lib/voice/**', '.github/workflows/voice-foundation.yml']
+  pull_request:
+    paths: ['src/lib/voice/**', '.github/workflows/voice-foundation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  session:
+    strategy:
+      matrix:
+        os: [macos-15, windows-2022, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - run: cmake -S src/lib/voice -B build/voice -DBUILD_TESTING=ON
+      - run: cmake --build build/voice --config Release
+      - run: ctest --test-dir build/voice -C Release --output-on-failure

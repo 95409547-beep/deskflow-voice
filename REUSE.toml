@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 version = 1
-SPDX-PackageName = "deskflow"
-SPDX-PackageSupplier = "Deskflow Devs"
-SPDX-PackageDownloadLocation = "https://github.com/deskflow/deskflow"
+SPDX-PackageName = "deskflow-voice"
+SPDX-PackageSupplier = "Deskflow Voice contributors"
+SPDX-PackageDownloadLocation = "https://github.com/95409547-beep/deskflow-voice"
 
 [[annotations]]
 path = [
@@ -65,3 +65,9 @@ path = [
 ]
 SPDX-FileCopyrightText = "Deskflow Developers"
 SPDX-License-Identifier = "GPL-2.0-only WITH LicenseRef-OpenSSL-Exception"
+
+[[annotations]]
+path = ["README.md", "docs/product/**", "docs/architecture/voice-session.md", "docs/adr/0001-foundation.md", "docs/build/macos.md", "tools/build-requirements-macos-py313.lock", ".github/workflows/voice-foundation.yml", "third_party/dependencies.json"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Deskflow Voice contributors"
+SPDX-License-Identifier = "MIT"
