@@ -1519,6 +1519,18 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>随本软件准备；开机启动将在安装器中提供。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>当前使用独立测试窗口。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>声音发送到配对电脑。按住时收音，松开后停止。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>等待核心 IPC 状态</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1576,6 +1588,10 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     </message>
     <message>
         <source>等待接收端</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · 到 Windows 按住 %2 说话。</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1699,6 +1715,25 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     </message>
     <message>
         <source>接收端消息不兼容</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>等待键鼠核心准备语音键</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::voice::VoiceService</name>
+    <message>
+        <source>此平台发送端尚未接入</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>配对信息尚未绑定 Deskflow 电脑</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请先准备 Windows 语音配对信息</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

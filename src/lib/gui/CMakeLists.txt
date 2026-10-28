@@ -124,6 +124,10 @@ add_library(${target} STATIC
   voice/VoiceBackend.h
   voice/VoiceWire.cpp
   voice/VoiceWire.h
+  voice/VoiceRouting.cpp
+  voice/VoiceRouting.h
+  voice/VoiceService.cpp
+  voice/VoiceService.h
   voice/VoicePreferences.cpp
   voice/VoicePreferences.h
   voice/VoiceSettingsPage.cpp
@@ -138,6 +142,7 @@ target_link_libraries(${target}
     Qt6::Widgets
     Qt6::Network
     voice_core
+    voice_control
 )
 
 if(APPLE)

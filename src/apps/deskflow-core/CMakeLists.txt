@@ -36,6 +36,7 @@ target_link_libraries(
   platform
   server
   app
+  voice_control
   Qt6::Widgets
   ${libs})
 

@@ -8,6 +8,7 @@
  */
 
 #include "MainWindow.h"
+#include "gui/voice/VoiceService.h"
 #include "ui_MainWindow.h"
 
 #include "Diagnostic.h"
@@ -82,6 +83,8 @@ MainWindow::MainWindow()
       m_networkMonitor{new NetworkMonitor(this)}
 {
   ui->setupUi(this);
+  m_voiceService = new voice::VoiceService(m_coreProcess, this);
+  m_voiceService->apply();
 
   setWindowIcon(QIcon::fromTheme(kRevFqdnName));
 
@@ -165,6 +168,7 @@ MainWindow::MainWindow()
 }
 MainWindow::~MainWindow()
 {
+  m_voiceService->shutdown();
   // Stop network monitoring
   if (m_networkMonitor) {
     m_networkMonitor->stopMonitoring();
@@ -468,11 +472,13 @@ void MainWindow::openGetNewVersionUrl() const
 
 void MainWindow::openSettings()
 {
-  auto dialog = SettingsDialog(this, m_serverConfig, &m_coreProcess);
+  auto dialog = SettingsDialog(this, m_serverConfig, &m_coreProcess, m_voiceService->backend());
+  connect(&dialog, &SettingsDialog::voiceReconnectRequested, m_voiceService, &voice::VoiceService::retry);
 
   connect(&dialog, &SettingsDialog::requestRemoveAllSettings, this, &MainWindow::clearSettings, Qt::UniqueConnection);
   if (dialog.exec() == QDialog::Accepted) {
     Settings::save();
+    m_voiceService->apply();
     disconnect(&dialog, &SettingsDialog::requestRemoveAllSettings, nullptr, nullptr);
 
     if (dialog.requiresCoreRestart()) {

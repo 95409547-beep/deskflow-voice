@@ -24,6 +24,7 @@
 #include "server/ClientProxy.h"
 #include "server/ClientProxyUnknown.h"
 #include "server/PrimaryClient.h"
+#include "voice/control/ControlServer.h"
 
 #ifdef _WIN32
 #include <algorithm>
@@ -35,6 +36,30 @@
 #include <ctime>
 
 using namespace deskflow::server;
+
+namespace {
+deskflow::voice::HoldKey voiceKey(KeyID key)
+{
+  using deskflow::voice::HoldKey;
+  if (key == kKeyF8)
+    return HoldKey::F8;
+  if (key == kKeyAlt_R || key == kKeyAltGr)
+    return HoldKey::RightOption;
+  if (key == kKeyControl_R)
+    return HoldKey::RightControl;
+  return HoldKey::Other;
+}
+KeyModifierMask voiceMask(KeyID key)
+{
+  if (key == kKeyAltGr)
+    return KeyModifierAltGr;
+  if (key == kKeyAlt_R)
+    return KeyModifierAlt;
+  if (key == kKeyControl_R)
+    return KeyModifierControl;
+  return 0;
+}
+} // namespace
 
 //
 // Server
@@ -148,10 +173,19 @@ Server::Server(ServerConfig &config, PrimaryClient *primaryClient, deskflow::Com
     LOG_INFO("default computer lock is on, locking cursor to computer");
     m_lockedToComputer = true;
   }
+  updateVoiceContext();
+}
+
+void Server::updateVoiceContext()
+{
+  if (auto *voice = deskflow::voice::control::ControlServer::current())
+    voice->context({getName(m_active), m_active != m_primaryClient, !m_keyboardBroadcasting && !m_activeSaver});
 }
 
 Server::~Server()
 {
+  if (auto *voice = deskflow::voice::control::ControlServer::current())
+    voice->context({});
   // remove event handlers and timers
   using enum EventTypes;
   m_events->removeHandler(KeyStateKeyDown, m_inputFilter);
@@ -485,6 +519,7 @@ void Server::switchComputer(BaseClientProxy *dst, int32_t x, int32_t y, bool for
 
     // cut over
     m_active = dst;
+    updateVoiceContext();
 
     // increment enter sequence number
     ++m_seqNum;
@@ -1397,6 +1432,7 @@ void Server::handleKeyboardBroadcastEvent(const Event &event)
   if (newState != m_keyboardBroadcasting || info->m_computers != m_keyboardBroadcastingComputers) {
     m_keyboardBroadcasting = newState;
     m_keyboardBroadcastingComputers = info->m_computers;
+    updateVoiceContext();
     LOG(
         (CLOG_DEBUG "keyboard broadcasting %s: %s", m_keyboardBroadcasting ? "on" : "off",
          m_keyboardBroadcastingComputers.c_str())
@@ -1524,6 +1560,7 @@ void Server::onScreensaver(bool activated)
     // reset state
     m_activeSaver = nullptr;
   }
+  updateVoiceContext();
 
   // send message to all clients
   for (ClientList::const_iterator index = m_clients.begin(); index != m_clients.end(); ++index) {
@@ -1536,6 +1573,18 @@ void Server::onKeyDown(KeyID id, KeyModifierMask mask, KeyButton button, const s
 {
   LOG_VERBOSE("onKeyDown id=%d mask=0x%04x button=0x%04x lang=%s", id, mask, button, lang.c_str());
   assert(m_active != nullptr);
+
+  if (auto *voice = deskflow::voice::control::ControlServer::current()) {
+    const auto allowed = voiceMask(id);
+    const auto nonLocks = mask & ~(KeyModifierCapsLock | KeyModifierNumLock | KeyModifierScrollLock);
+    const bool eligible = !m_keyboardBroadcasting && IKeyState::KeyInfo::isDefault(computers);
+    if (voice->down(voiceKey(id), button, eligible && (nonLocks & ~allowed) == 0)) {
+      m_voiceModifierMask = allowed;
+      return;
+    }
+    if (voice->suppressedModifier() != deskflow::voice::HoldKey::Other)
+      mask &= ~m_voiceModifierMask;
+  }
 
   // relay
   if (!m_keyboardBroadcasting && IKeyState::KeyInfo::isDefault(computers)) {
@@ -1559,6 +1608,15 @@ void Server::onKeyUp(KeyID id, KeyModifierMask mask, KeyButton button, const cha
 {
   LOG_VERBOSE("onKeyUp id=%d mask=0x%04x button=0x%04x", id, mask, button);
   assert(m_active != nullptr);
+
+  if (auto *voice = deskflow::voice::control::ControlServer::current()) {
+    if (voice->up(button)) {
+      m_voiceModifierMask = 0;
+      return;
+    }
+    if (voice->suppressedModifier() != deskflow::voice::HoldKey::Other)
+      mask &= ~m_voiceModifierMask;
+  }
 
   // relay
   if (!m_keyboardBroadcasting && IKeyState::KeyInfo::isDefault(computers)) {
@@ -1585,6 +1643,13 @@ void Server::onKeyRepeat(KeyID id, KeyModifierMask mask, int32_t count, KeyButto
        lang.c_str())
   );
   assert(m_active != nullptr);
+
+  if (auto *voice = deskflow::voice::control::ControlServer::current()) {
+    if (voice->repeat(button))
+      return;
+    if (voice->suppressedModifier() != deskflow::voice::HoldKey::Other)
+      mask &= ~m_voiceModifierMask;
+  }
 
   // relay
   m_active->keyRepeat(id, mask, count, button, lang);
@@ -2044,6 +2109,7 @@ void Server::forceLeaveClient(const BaseClientProxy *client)
 
     // cut over
     m_active = m_primaryClient;
+    updateVoiceContext();
 
     // enter new computer (unless we already have because of the
     // screen saver)

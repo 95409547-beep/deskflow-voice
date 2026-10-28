@@ -27,7 +27,9 @@
 
 using namespace deskflow::gui;
 
-SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig, CoreProcess *core)
+SettingsDialog::SettingsDialog(
+    QWidget *parent, const ServerConfig &serverConfig, CoreProcess *core, voice::VoiceBackend *backend
+)
     : QDialog(parent),
       ui{std::make_unique<Ui::SettingsDialog>()},
       m_serverConfig(serverConfig),
@@ -37,6 +39,8 @@ SettingsDialog::SettingsDialog(QWidget *parent, const ServerConfig &serverConfig
 
   ui->setupUi(this);
   m_voicePage = new voice::SettingsPage(this);
+  if (backend)
+    m_voicePage->bindBackend(backend, false);
   ui->tabWidget->addTab(m_voicePage, tr("跨设备语音"));
   layout()->addWidget(m_buttonBox);
   ui->tabWidget->setCurrentIndex(0);
@@ -108,6 +112,7 @@ void SettingsDialog::changeEvent(QEvent *e)
 
 void SettingsDialog::initConnections() const
 {
+  connect(m_voicePage, &voice::SettingsPage::reconnectRequested, this, &SettingsDialog::voiceReconnectRequested);
   connect(m_voicePage, &voice::SettingsPage::preferencesChanged, this, &SettingsDialog::setButtonBoxEnabledButtons);
   connect(m_buttonBox, &SettingsDialogButtonBox::accepted, this, &SettingsDialog::accept);
   connect(m_buttonBox, &SettingsDialogButtonBox::rejected, this, &QDialog::reject);

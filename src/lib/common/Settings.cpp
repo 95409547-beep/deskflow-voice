@@ -310,7 +310,7 @@ QVariant Settings::defaultValue(const QString &key)
 {
   if (key == Voice::Role)
     return QStringLiteral("auto");
-  if (key == Voice::InputUid || key == Voice::TargetComputer)
+  if (key == Voice::InputUid || key == Voice::TargetComputer || key == Voice::PeerFile)
     return QString();
   if (key == Voice::Shortcut) {
 #ifdef Q_OS_MACOS

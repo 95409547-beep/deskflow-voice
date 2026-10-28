@@ -27,6 +27,7 @@ struct VoicePeer
   quint16 port = 0;
   QByteArray certificateSha256;
   QString token;
+  QString screen = {};
   static VoicePeer load(const QString &file);
 };
 } // namespace deskflow::gui::voice

@@ -107,6 +107,7 @@ public:
     inline static const auto InputUid = QStringLiteral("voice/inputUid");
     inline static const auto TargetComputer = QStringLiteral("voice/targetComputer");
     inline static const auto Shortcut = QStringLiteral("voice/shortcut");
+    inline static const auto PeerFile = QStringLiteral("voice/peerFile");
   };
   struct Server
   {
@@ -283,6 +284,7 @@ private:
 
   inline static const QStringList m_validKeys = {
       Voice::Enabled
+    , Voice::PeerFile
     , Voice::Role
     , Voice::InputUid
     , Voice::TargetComputer

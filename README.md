@@ -2,7 +2,7 @@
 
 Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Windows → Windows**，Windows → Mac 留给后续版本。
 
-当前是工程基础阶段，**还没有可供普通用户安装的完整语音发行版**。现有原型曾通过 Mac → Windows 真人输入验收；本仓库新增的公共会话模块通过的是纯状态检查，不能据此宣称 Windows → Windows 已经可用。
+当前是产品开发阶段，**还没有可供普通用户安装的完整语音发行版**。Mac普通USB麦克风已在独立开发窗口通过连续两句真人输入与松开停止；主GUI和Deskflow屏幕路由已接线，尚待全局键实机回归。Windows → Windows 发送端尚未接入。
 
 ## 已落地
 
@@ -10,11 +10,12 @@ Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Wi
 - 迁移 Mac 右 Option、TIS 主线程访问与漏松键自动恢复修复及对应检查。
 - 新增可独立构建的 C++20 会话状态机：两种发送端、Windows 接收端、重复会话、松开、焦点变化、断线与迟到消息处理。
 - 新增跨平台会话 CI，以及 Windows 组件构建、纯托管检查和独立运行库发布检查。
-- 迁移 Windows 接收与输入法适配源码；默认显示帮助，仅开放 82 项纯托管检查，真实语音入口尚未接通。
+- 迁移 Windows 接收与输入法适配源码；默认显示帮助，显式V2开发入口已接通，166项纯托管检查通过。
 - 两端原型源码已作内部快照；公开组件已移除个机路径、设备标识、凭据和运行记录。
 - 新增 v0.2 离线交互原型：“使用 / 设备 / 设置”分页、按需开始、问题修复与连续输入演示。
-- 原生 Qt 设置已接入分页、配置保存、只读麦克风枚举与结构化键鼠连接状态；常规主界面尚未绑定后台，保持明确的未就绪状态。
-- 新增普通麦克风开发链路：CoreAudio、Qt固定证书TLS、Windows V2直接输入法控制和原生按住试说；已通过普通USB麦克风连续两句真人输入与松开停止。Deskflow屏幕路由、全局按键与正式安装仍待接入。
+- 原生 Qt 设置已接入分页、配置保存、只读麦克风枚举与结构化键鼠连接状态；主GUI现已绑定后台，只有私有控制和接收端都准备好才显示就绪。
+- 新增普通麦克风开发链路：CoreAudio、Qt固定证书TLS、Windows V2直接输入法控制和原生按住试说；已通过普通USB麦克风连续两句真人输入与松开停止。
+- 新增Deskflow核心按住键与屏幕路由，覆盖切屏取消、退出收尾、租约和重连不续录；本批构建及回环测试通过，真实全局键与正式安装尚未验收。
 
 ## 检查公共会话模块
 
@@ -35,6 +36,7 @@ ctest --test-dir build/voice -C Release --output-on-failure
 - [漏松键恢复与安全检查入口](docs/build/modifier-recovery.md)
 - [原生设置、设备检测与布局检查](docs/build/native-settings/README.md)
 - [真实语音后台的开发入口与验证边界](docs/build/voice-runtime.md)
+- [Deskflow屏幕路由、全局键与主GUI接线](docs/build/voice-routing.md)
 - [Windows 独立组件构建](components/windows-voice/README.md)
 - [本批工程验证记录](docs/build/foundation-validation.md)
 - [语音界面交互原型与设计说明](docs/prototypes/cross-device-voice/README.md)

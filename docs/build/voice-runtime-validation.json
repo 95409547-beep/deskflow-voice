@@ -19,8 +19,21 @@
   "mac_ack_pcm_bytes": 864000,
   "pcm_seconds": 9,
   "ack_count_equated_to_phrase_count": false,
-  "final_sender_state": {"ready": true, "busy": false},
-  "windows_detailed_rpc_metadata": "not fetched after acceptance; coordination host temporarily unavailable",
+  "final_sender_state": {
+    "ready": true,
+    "busy": false
+  },
+  "windows_detailed_rpc_metadata": {
+    "fetched": true,
+    "rounds": 4,
+    "normal_end": 3,
+    "cancelled_legacy_session_active": 1,
+    "native_stop_confirmations": 4,
+    "nonzero_rpc_results": 0,
+    "rpc_timeouts": 0,
+    "protocol_errors": 0,
+    "cancel_subreason_reconstructible": false
+  },
   "audio_saved": false,
   "transcript_read": false,
   "existing_siri_deployment_replaced": false,
