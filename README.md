@@ -13,7 +13,8 @@ Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Wi
 - 迁移 Windows 接收与输入法适配源码；默认显示帮助，仅开放 82 项纯托管检查，真实语音入口尚未接通。
 - 两端原型源码已作内部快照；公开组件已移除个机路径、设备标识、凭据和运行记录。
 - 新增 v0.2 离线交互原型：“使用 / 设备 / 设置”分页、按需开始、问题修复与连续输入演示。
-- 原生 Qt 设置已接入分页、配置保存、只读麦克风枚举与结构化键鼠连接状态；语音后台尚未接通，页面明确显示未就绪。
+- 原生 Qt 设置已接入分页、配置保存、只读麦克风枚举与结构化键鼠连接状态；常规主界面尚未绑定后台，保持明确的未就绪状态。
+- 新增普通麦克风开发链路：CoreAudio、Qt固定证书TLS、Windows V2直接输入法控制和原生按住试说；已通过普通USB麦克风连续两句真人输入与松开停止。Deskflow屏幕路由、全局按键与正式安装仍待接入。
 
 ## 检查公共会话模块
 
@@ -33,6 +34,7 @@ ctest --test-dir build/voice -C Release --output-on-failure
 - [Mac 完整源码构建](docs/build/macos.md)
 - [漏松键恢复与安全检查入口](docs/build/modifier-recovery.md)
 - [原生设置、设备检测与布局检查](docs/build/native-settings/README.md)
+- [真实语音后台的开发入口与验证边界](docs/build/voice-runtime.md)
 - [Windows 独立组件构建](components/windows-voice/README.md)
 - [本批工程验证记录](docs/build/foundation-validation.md)
 - [语音界面交互原型与设计说明](docs/prototypes/cross-device-voice/README.md)

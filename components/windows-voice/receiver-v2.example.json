@@ -1,0 +1,16 @@
+{
+  "BindAddress": "127.0.0.1",
+  "Port": 24820,
+  "AllowedPeer": "127.0.0.1",
+  "TokenEnvironment": "DESKFLOW_VOICE_V2_TOKEN",
+  "CertificatePath": "pairing/receiver.pfx",
+  "CertificatePasswordEnvironment": "DESKFLOW_VOICE_V2_CERTIFICATE_PASSWORD",
+  "CertificateSha256": "Provision a verified certificate SHA256",
+  "OutputDevicePrefix": "Select a unique installed virtual audio output",
+  "StateDirectory": "private/state-v2",
+  "InputMethod": {
+    "ServiceSha256": "Verify the installed service SHA256",
+    "RpcSha256": "Verify the installed RPC library SHA256",
+    "SignerThumbprint": "Verify the installed signer thumbprint"
+  }
+}

@@ -1,6 +1,6 @@
 # 公共语音会话接口
 
-状态：已实现纯 C++ 模型；尚未接入真实采集、TLS、Deskflow IPC 或豆包适配器。
+状态：纯 C++ 模型已接入独立开发窗口的 CoreAudio/Qt TLS 发送端；Windows V2 提供带启动/结束确认的输入法与音频适配。普通USB麦克风连续两句输入及松开停止已获真人确认；Deskflow屏幕路由、全局按住事件与产品生命周期尚未绑定。见[开发验证记录](../build/voice-runtime.md)。
 
 `src/lib/voice/Session` 接受平台与会话事件，返回待执行的 Effect。模型本身不打开设备、加载原生 DLL、发键、建立网络连接或调用输入法，因此适合在 Mac、Windows 和 CI 中检查相同规则。
 
@@ -34,4 +34,4 @@
 
 ## Windows 原型组件的迁移边界
 
-`components/windows-voice` 保存整理后的接收端与输入法适配源码，只开放帮助和纯托管检查命令。它仍沿用原型的 JSON/UUID 协议，尚无本模型要求的 Begin 启动确认与连接代次。后续先统一协议与确认时序，再接入真实音频及 Qt 生命周期；当前不能直接把这两个模块拼接后启用。
+`components/windows-voice` 保留原型 V1 源码，并新增独立 `--serve-v2` 入口。V2 与 Qt 开发发送端统一帧、连接UUID、会话序号和 Begin/End 确认；旧 `Receiver.cs` 不直接接入新模型，也不启动其旧热键入口。普通用户安装、配对、Deskflow生命周期和端到端验收仍需完成。

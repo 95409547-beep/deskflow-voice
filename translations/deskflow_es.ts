@@ -1407,6 +1407,10 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>按住试说</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>跨设备语音</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1440,10 +1444,6 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     </message>
     <message>
         <source>声音来源</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>语音身份、输入法与接收音频：等待语音服务接入</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1495,11 +1495,19 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>已配对的 Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1（未连接）</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>系统默认麦克风</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>系统默认（%1）</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1560,6 +1568,137 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     </message>
     <message>
         <source>开始使用</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端已就绪</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>等待接收端</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · 按住试说，松开结束。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>连接语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::voice::VoiceBackend</name>
+    <message>
+        <source>接收端身份不匹配</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音连接中断，请重新连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音连接已断开</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音启动、结束或说话时长超时，已停止收音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端未响应</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>尚未连接语音接收端</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>声音来源已更改，请重新连接后再试</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请先准备接收端配对信息</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在连接语音接收端</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音已停用</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>网络发送积压，已停止本轮</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请允许麦克风访问，授权后重新按住试说</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>麦克风已允许，请重新按住试说</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>麦克风权限未允许</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在启动 Windows 语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在向 Windows 说话</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在结束本句</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>麦克风音频格式无效</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端协议无效</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端版本或就绪状态不兼容</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows 接收端已就绪</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端连接代次不匹配</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端拒绝本轮，请检查 Windows 状态</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端会话不匹配</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows 尚未完成收尾，请重新连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>本轮已结束，请先松开</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已结束，可以继续下一句</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收端消息不兼容</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

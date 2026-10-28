@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Deskflow Voice contributors -->
+<!-- SPDX-License-Identifier: MIT -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>VoiceRuntimePreview</string>
+<key>CFBundleIdentifier</key><string>org.deskflow.voice.development</string>
+<key>CFBundleName</key><string>Deskflow Voice Dev</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleVersion</key><string>1</string>
+<key>NSMicrophoneUsageDescription</key><string>按住试说时采集所选麦克风，将声音发送到已确认的 Windows 输入框。松开后停止，不保存录音。</string>
+<key>NSLocalNetworkUsageDescription</key><string>连接你已配对的 Windows 语音接收端。</string>
+<key>NSSupportsAutomaticTermination</key><false/>
+</dict></plist>

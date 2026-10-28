@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 #include "VoiceSettingsPage.h"
+#include "VoiceBackend.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -32,7 +33,9 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
       m_hint(new QLabel(this)),
       m_connectionLabel(new QLabel(this)),
       m_sourceLabel(new QLabel(this)),
-      m_action(new QPushButton(this))
+      m_action(new QPushButton(this)),
+      m_talk(new QPushButton(tr("按住试说"), this)),
+      m_serviceLabel(new QLabel(this))
 {
   auto *root = new QVBoxLayout(this);
   auto *heading = new QHBoxLayout;
@@ -54,6 +57,9 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   m_title->setObjectName(QStringLiteral("voiceStatus"));
   m_connectionLabel->setObjectName(QStringLiteral("voiceControlConnection"));
   m_action->setObjectName(QStringLiteral("voicePrimaryAction"));
+  m_talk->setObjectName(QStringLiteral("voiceTalk"));
+  m_talk->setMinimumWidth(132);
+  m_talk->setAutoDefault(false);
 
   auto *home = new QWidget(this);
   auto *homeLayout = new QVBoxLayout(home);
@@ -73,6 +79,7 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   actionRow->addStretch();
   m_action->setMinimumWidth(132);
   actionRow->addWidget(m_action);
+  actionRow->addWidget(m_talk);
   actionRow->addStretch();
   homeLayout->addLayout(actionRow);
   homeLayout->addStretch();
@@ -95,9 +102,8 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   deviceForm->addRow(tr("声音来源"), m_input);
   m_sourceLabel->setWordWrap(true);
   deviceForm->addRow(QString(), m_sourceLabel);
-  auto *voiceState = new QLabel(tr("语音身份、输入法与接收音频：等待语音服务接入"), this);
-  voiceState->setWordWrap(true);
-  deviceForm->addRow(tr("语音检测"), voiceState);
+  m_serviceLabel->setWordWrap(true);
+  deviceForm->addRow(tr("语音检测"), m_serviceLabel);
   deviceLayout->addLayout(deviceForm);
   auto *refresh = new QPushButton(tr("重新检测设备"), this);
   refresh->setObjectName(QStringLiteral("voiceRefreshDevices"));
@@ -141,6 +147,14 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   };
   connect(m_enabled, &QCheckBox::toggled, this, changed);
   connect(m_input, &QComboBox::currentIndexChanged, this, changed);
+  connect(m_input, &QComboBox::currentIndexChanged, this, [this] {
+    if (!m_loading && m_backend)
+      m_backend->setInputUid(m_input->currentData().toString());
+  });
+  connect(m_enabled, &QCheckBox::toggled, this, [this](bool enabled) {
+    if (!m_loading && !enabled && m_backend)
+      m_backend->close();
+  });
   connect(m_target, &QComboBox::currentIndexChanged, this, changed);
   connect(m_shortcut, &QComboBox::currentIndexChanged, this, changed);
   connect(m_role, &QComboBox::currentIndexChanged, this, [this, changed] {
@@ -153,7 +167,18 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   connect(m_action, &QPushButton::clicked, this, [this] {
     if (!m_enabled->isChecked() && m_writable)
       m_enabled->setChecked(true);
-    m_tabs->setCurrentIndex(1);
+    if (m_backend && m_enabled->isChecked())
+      m_backend->connectPeer();
+    else
+      m_tabs->setCurrentIndex(1);
+  });
+  connect(m_talk, &QPushButton::pressed, this, [this] {
+    if (m_backend)
+      m_backend->press();
+  });
+  connect(m_talk, &QPushButton::released, this, [this] {
+    if (m_backend)
+      m_backend->release();
   });
   loadPreferences(Preferences::defaults());
 }
@@ -242,7 +267,7 @@ void SettingsPage::refreshPeers()
   const QSignalBlocker blocker(m_target);
   const auto selected = m_target->currentData().toString();
   m_target->clear();
-  m_target->addItem(tr("跟随当前控制位置"), QString());
+  m_target->addItem(m_backend ? tr("已配对的 Windows") : tr("跟随当前控制位置"), QString());
   if (m_connection.ipcAvailable && m_connection.controlConnected) {
     for (const auto &peer : m_connection.peerNames) {
       if (!peer.isEmpty() && m_target->findData(peer) < 0)
@@ -260,7 +285,14 @@ void SettingsPage::refreshDevices()
   const auto selected = m_input->currentData().toString();
   m_inputs = sending() ? m_query() : AudioInputs{};
   m_input->clear();
-  m_input->addItem(tr("系统默认麦克风"), QString());
+  const auto defaultDevice =
+      std::find_if(m_inputs.devices.cbegin(), m_inputs.devices.cend(), [](const AudioInput &device) {
+        return device.isDefault;
+      });
+  m_input->addItem(
+      defaultDevice == m_inputs.devices.cend() ? tr("系统默认麦克风") : tr("系统默认（%1）").arg(defaultDevice->name),
+      QString()
+  );
   for (const auto &device : m_inputs.devices)
     m_input->addItem(device.isDefault ? tr("%1（系统默认）").arg(device.name) : device.name, device.uid);
   if (!selected.isEmpty() && m_input->findData(selected) < 0)
@@ -279,9 +311,21 @@ bool SettingsPage::sourcePresent() const
 
 bool SettingsPage::serviceReady() const
 {
-  // A keyboard connection or a present microphone is never voice readiness.
-  // Replace only when the authenticated voice-service adapter exists.
-  return false;
+  return m_backend && m_backend->ready();
+}
+
+void SettingsPage::bindBackend(VoiceBackend *backend)
+{
+  if (m_backend)
+    disconnect(m_backend, nullptr, this, nullptr);
+  m_backend = backend;
+  refreshPeers();
+  if (backend) {
+    backend->setInputUid(m_input->currentData().toString());
+    connect(backend, &VoiceBackend::changed, this, &SettingsPage::refreshStatus);
+    connect(backend, &QObject::destroyed, this, &SettingsPage::refreshStatus);
+  }
+  refreshStatus();
 }
 
 void SettingsPage::refreshStatus()
@@ -290,7 +334,7 @@ void SettingsPage::refreshStatus()
   m_role->setEnabled(m_writable);
   m_enabled->setEnabled(m_writable);
   m_input->setEnabled(m_writable && sender);
-  m_target->setEnabled(m_writable && sender);
+  m_target->setEnabled(m_writable && sender && !m_backend);
   m_shortcut->setEnabled(m_writable && sender);
   m_connectionLabel->setText(
       !m_connection.ipcAvailable      ? tr("等待核心 IPC 状态")
@@ -311,6 +355,15 @@ void SettingsPage::refreshStatus()
 #endif
   m_hint->setText(m_enabled->isChecked() ? tr("此开发构建尚未接入语音后台。") : tr("先检查电脑连接与声音来源。"));
   m_action->setText(m_enabled->isChecked() ? tr("检查设备") : tr("开始使用"));
+  m_talk->setVisible(m_backend && serviceReady() && m_enabled->isChecked());
+  m_talk->setEnabled(m_writable && sender && sourcePresent());
+  m_action->setVisible(!m_backend || !serviceReady() || !m_enabled->isChecked());
+  m_serviceLabel->setText(serviceReady() ? tr("接收端已就绪") : tr("等待接收端"));
+  if (m_backend && m_enabled->isChecked()) {
+    m_title->setText(m_backend->status());
+    m_hint->setText(tr("%1 · 按住试说，松开结束。").arg(m_input->currentText()));
+    m_action->setText(tr("连接语音"));
+  }
 }
 
 } // namespace deskflow::gui::voice
