@@ -125,6 +125,13 @@ internal static class V2Server
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation); timeout.CancelAfter(3000);
                 Framing.Write(stream, value, timeout.Token).GetAwaiter().GetResult();
             }
+            try { backend.Preflight(); }
+            catch (V2PreflightException error)
+            {
+                var rejected = protocol.Hello(); rejected["error"] = "preflight_failed"; rejected["reason"] = error.Code;
+                Send(rejected); log(new { type = "preflight_rejected", epoch = protocol.Epoch, reason = error.Code, NativeActions = 0 });
+                return;
+            }
             Send(protocol.Hello()); status(true, protocol.Epoch, true); log(new { type = "authenticated", epoch = protocol.Epoch, NativeActions = 0 });
             using var readLifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
             readLifetime.CancelAfter(7000);

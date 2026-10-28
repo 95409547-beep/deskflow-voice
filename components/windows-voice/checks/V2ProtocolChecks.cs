@@ -12,7 +12,7 @@ internal static class V2ProtocolChecks
         internal bool Busy, FailBegin, FailEnd;
         internal string? Cancel;
         internal readonly List<string> Order = new();
-        public bool Ready { get; private set; } = true;
+        public bool Ready { get; internal set; } = true;
         public void Begin(V2Begin begin)
         {
             if (Busy) throw new V2BusyException("busy");
@@ -68,6 +68,9 @@ internal static class V2ProtocolChecks
             Check("non-object-message-has-no-backend-actions", Type(malformed.Send(new[] { 1 }), "error") && malformed.Backend.Begins == 0 && malformed.Backend.Stops == 0);
         }
         var a = new Fixture(); var first = Id(); var second = Id(); var hello = a.Protocol.Hello();
+        var unprepared = new Fixture(); unprepared.Backend.Ready = false;
+        Check("hello-never-assumes-unprepared-backend-is-ready", !(bool)unprepared.Protocol.Hello()["ready"] && unprepared.Backend.Begins == 0 && unprepared.Backend.Stops == 0);
+        Check("unprepared-backend-cannot-acknowledge-begin", Type(unprepared.Begin(Id()), "error") && unprepared.Backend.Begins == 0);
         Check("hello-epoch-and-wire-format", Guid.TryParse((string)hello["epoch"], out _) && (int)hello["protocol"] == 2 && (int)hello["sample_rate"] == 48000 && (int)hello["channels"] == 1 && (string)hello["format"] == "s16le");
         Check("started-after-backend-confirmation", Type(a.Begin(first), "started") && a.Backend.Begins == 1 && a.Backend.Order.SequenceEqual(new[] { "start-show-mic-started" }));
         Check("duplicate-begin-idempotent", Type(a.Begin(first), "started") && a.Backend.Begins == 1);

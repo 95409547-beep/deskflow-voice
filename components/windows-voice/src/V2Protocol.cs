@@ -7,6 +7,7 @@ namespace DeskflowVoice.Windows;
 internal sealed record V2Begin(string Session, string Sequence, string Generation);
 internal sealed class V2ProtocolException(string code) : Exception(code) { internal string Code => Message; }
 internal sealed class V2BusyException(string code) : Exception(code);
+internal sealed class V2PreflightException(string code) : Exception(code) { internal string Code => Message; }
 internal interface IV2VoiceBackend : IDisposable
 {
     bool Ready { get; }
@@ -37,7 +38,7 @@ internal sealed class V2Protocol
     }
     internal Dictionary<string, object> Hello() => new()
     {
-        ["type"] = "hello", ["protocol"] = 2, ["epoch"] = Epoch, ["receiver"] = "windows", ["ready"] = true,
+        ["type"] = "hello", ["protocol"] = 2, ["epoch"] = Epoch, ["receiver"] = "windows", ["ready"] = !quarantined && backend.Ready,
         ["sample_rate"] = 48000, ["channels"] = 1, ["format"] = "s16le"
     };
     internal static bool Authenticate(JsonElement hello, string token) =>

@@ -31,7 +31,7 @@ internal sealed class V2WaveOutput : IDisposable
     [DllImport("winmm.dll")] private static extern uint waveOutReset(nint handle);
     [DllImport("winmm.dll")] private static extern uint waveOutClose(nint handle);
     private static void Check(uint code) { if (code != 0) throw new IOException("wave_output_error_" + code); }
-    internal V2WaveOutput(string prefix)
+    internal static uint ResolveUniqueDevice(string prefix)
     {
         var ids = new List<uint>();
         for (uint id = 0; id < waveOutGetNumDevs(); id++)
@@ -40,8 +40,13 @@ internal sealed class V2WaveOutput : IDisposable
             if (caps.Name.StartsWith(prefix, StringComparison.Ordinal)) ids.Add(id);
         }
         if (ids.Count != 1) throw new InvalidOperationException("Output prefix must resolve to exactly one device");
+        return ids[0];
+    }
+    internal V2WaveOutput(string prefix)
+    {
+        var id = ResolveUniqueDevice(prefix);
         var format = new Format { Tag = 1, Channels = 2, Samples = 48000, Bytes = 192000, Align = 4, Bits = 16 };
-        Check(waveOutOpen(out handle, ids[0], ref format, 0, 0, 0));
+        Check(waveOutOpen(out handle, id, ref format, 0, 0, 0));
     }
     private void Reap()
     {

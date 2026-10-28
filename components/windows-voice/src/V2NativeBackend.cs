@@ -13,9 +13,28 @@ internal sealed class V2NativeBackend(V2Options options, Action<object> log) : I
     private V2WaveOutput? output;
     private HotkeyPattern.Target? target;
     private Mutex? lease;
-    private bool ownsLease, ownedStart, stopAttempted, unknown, quarantined;
+    private bool ownsLease, ownedStart, stopAttempted, unknown, quarantined, preflightPassed;
     private long ownedMicStart, startBaseline, startAttempt;
-    public bool Ready => !quarantined && !unknown;
+    public bool Ready => preflightPassed && !quarantined && !unknown;
+
+    internal void Preflight()
+    {
+        preflightPassed = false;
+        var stage = "legacy_not_idle";
+        try
+        {
+            LegacyIdle();
+            stage = "input_method_verification_failed";
+            var verified = CurrentVoiceService.Prepare(options.InputMethod);
+            stage = "output_device_not_unique";
+            V2WaveOutput.ResolveUniqueDevice(options.OutputDevicePrefix);
+            stage = "legacy_not_idle"; LegacyIdle();
+            stage = "input_method_not_idle"; verified.ValidateIdleAndPipe();
+            preflightPassed = true;
+            log(new { type = "preflight_ready", ServicePid = verified.Pin.Pid, NativeRpcLoaded = false, AudioDeviceOpened = false });
+        }
+        catch { preflightPassed = false; throw new V2PreflightException(stage); }
+    }
 
     public void Begin(V2Begin begin)
     {
