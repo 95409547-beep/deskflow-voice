@@ -8,10 +8,17 @@
 
 #pragma once
 #include <QDialog>
+#include <QVariantMap>
 
 #include "gui/config/ServerConfig.h"
 
 class SettingsDialogButtonBox;
+namespace deskflow::gui {
+class CoreProcess;
+namespace voice {
+class SettingsPage;
+}
+} // namespace deskflow::gui
 
 namespace Ui {
 class SettingsDialog;
@@ -23,8 +30,12 @@ class SettingsDialog : public QDialog
 
 public:
   void extracted();
-  SettingsDialog(QWidget *parent, const ServerConfig &serverConfig);
+  SettingsDialog(QWidget *parent, const ServerConfig &serverConfig, deskflow::gui::CoreProcess *core = nullptr);
   ~SettingsDialog() override;
+  bool requiresCoreRestart() const
+  {
+    return m_requiresCoreRestart;
+  }
 
 Q_SIGNALS:
   void requestRemoveAllSettings();
@@ -65,6 +76,9 @@ private:
    * @return true when any client settings in the gui do not match the stored settings values.
    */
   bool isModified() const;
+  bool generalSettingsModified() const;
+  QVariantMap generalControlValues() const;
+  void refreshVoiceConnection();
 
   /**
    * @brief isDefault
@@ -83,8 +97,11 @@ private:
    */
   void setButtonBoxEnabledButtons() const;
 
-  bool m_interfaceSetOnLoad = false;
   std::unique_ptr<Ui::SettingsDialog> ui;
   const ServerConfig &m_serverConfig;
   SettingsDialogButtonBox *m_buttonBox = nullptr;
+  deskflow::gui::voice::SettingsPage *m_voicePage = nullptr;
+  deskflow::gui::CoreProcess *m_core = nullptr;
+  bool m_requiresCoreRestart = false;
+  QVariantMap m_generalBaseline;
 };

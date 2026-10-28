@@ -468,17 +468,17 @@ void MainWindow::openGetNewVersionUrl() const
 
 void MainWindow::openSettings()
 {
-  auto dialog = SettingsDialog(this, m_serverConfig);
+  auto dialog = SettingsDialog(this, m_serverConfig, &m_coreProcess);
 
   connect(&dialog, &SettingsDialog::requestRemoveAllSettings, this, &MainWindow::clearSettings, Qt::UniqueConnection);
   if (dialog.exec() == QDialog::Accepted) {
     Settings::save();
     disconnect(&dialog, &SettingsDialog::requestRemoveAllSettings, nullptr, nullptr);
 
-    applyConfig();
-
-    if (m_coreProcess.isStarted()) {
-      m_coreProcess.restart();
+    if (dialog.requiresCoreRestart()) {
+      applyConfig();
+      if (m_coreProcess.isStarted())
+        m_coreProcess.restart();
     }
   }
 }

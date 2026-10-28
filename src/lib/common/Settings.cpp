@@ -308,6 +308,17 @@ void Settings::checkIfSettingsWritableChange()
 
 QVariant Settings::defaultValue(const QString &key)
 {
+  if (key == Voice::Role)
+    return QStringLiteral("auto");
+  if (key == Voice::InputUid || key == Voice::TargetComputer)
+    return QString();
+  if (key == Voice::Shortcut) {
+#ifdef Q_OS_MACOS
+    return QStringLiteral("right-option");
+#else
+    return QStringLiteral("F8");
+#endif
+  }
   if (key.startsWith(QStringLiteral("computer_"))) {
     const auto computerKey = key.mid(key.indexOf('/') + 1);
     return computerDefaults(computerKey);

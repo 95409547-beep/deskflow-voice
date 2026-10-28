@@ -1182,6 +1182,10 @@ Enabling this setting will disable the server config GUI.</source>
         <translation>言語</translation>
     </message>
     <message>
+        <source>跨设备语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>TLS Certificate Regenerated</source>
         <translation>TLS 証明書再生成</translation>
     </message>
@@ -1228,6 +1232,10 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Verbose debug output</source>
         <translation>詳細なデバッグ出力</translation>
+    </message>
+    <message>
+        <source>已连接的控制电脑</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Automatic</source>
@@ -1391,6 +1399,169 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Encryption Disabled</source>
         <translation>暗号化無効</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::voice::SettingsPage</name>
+    <message>
+        <source>启用</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>跨设备语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>使用</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>自动选择</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>发送声音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>本机用途</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>键鼠连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>目标电脑</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>声音来源</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音身份、输入法与接收音频：等待语音服务接入</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音检测</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>重新检测设备</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>设备</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>右 Option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>右 Ctrl</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>按住说话键</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>登录准备将在语音后台接入后提供</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>自动准备</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开发状态</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>当前仅枚举系统声音设备并读取核心 IPC 状态，不录音、发键或启动语音。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>设置</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>跟随当前控制位置</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1（未连接）</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>系统默认麦克风</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1（系统默认）</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已选设备不可用</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>等待核心 IPC 状态</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>键鼠已连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>尚未连接电脑</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>声音来源在发送端设置</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已找到声音来源，尚未收音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>声音来源不可用，请连接或更换设备</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>当前平台尚不支持语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音服务尚未就绪</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开启跨设备语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>此开发构建尚未接入语音后台。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>先检查电脑连接与声音来源。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>检查设备</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开始使用</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
