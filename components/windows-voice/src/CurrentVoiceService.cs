@@ -36,7 +36,7 @@ internal sealed class CurrentVoiceService
             !string.Equals(actual.ImagePath, pin.ImagePath, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Service changed; no in-session rebinding");
     }
-    internal static CurrentVoiceService Prepare(InputMethodOptions options)
+    internal static CurrentVoiceService Prepare(InputMethodOptions options, bool requireIdle = true)
     {
         options.Validate();
         var root = options.ResolveInstallationRoot();
@@ -51,7 +51,8 @@ internal sealed class CurrentVoiceService
         var service = new CurrentVoiceService(BindUnique(installed, installed[0].ImagePath!));
         VerifyFile(service.Pin.ImagePath, options.ServiceSha256, options.SignerThumbprint);
         VerifyFile(service.RpcPath, options.RpcSha256, options.SignerThumbprint);
-        service.ValidateIdleAndPipe();
+        if (requireIdle) service.ValidateIdleAndPipe();
+        else service.ValidateIdentity();
         return service;
     }
     internal static bool IsUnderRoot(string root, string file)
