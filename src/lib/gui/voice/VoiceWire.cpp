@@ -61,6 +61,9 @@ VoicePeer VoicePeer::load(const QString &file)
   if (host.isEmpty() || host.size() > 253 || port < 1 || port > 65535 ||
       !hex.match(QString::fromLatin1(pin)).hasMatch() || !hex.match(token).hasMatch())
     throw std::runtime_error("invalid private peer values");
-  return {host, static_cast<quint16>(port), QByteArray::fromHex(pin), token};
+  const auto screen = object.value(QStringLiteral("screen")).toString();
+  if (screen.size() > 255 || screen.contains(QChar('\0')))
+    throw std::runtime_error("invalid paired screen");
+  return {host, static_cast<quint16>(port), QByteArray::fromHex(pin), token, screen};
 }
 } // namespace deskflow::gui::voice

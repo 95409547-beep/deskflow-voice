@@ -328,6 +328,7 @@ private:
   void onClipboardChanged(const BaseClientProxy *sender, ClipboardID id, uint32_t seqNum);
   void onScreensaver(bool activated);
   void onKeyDown(KeyID, KeyModifierMask, KeyButton, const std::string &, const char *computers);
+  void updateVoiceContext();
   void onKeyUp(KeyID, KeyModifierMask, KeyButton, const char *computers);
   void onKeyRepeat(KeyID, KeyModifierMask, int32_t, KeyButton, const std::string &);
   void onMouseDown(ButtonID);
@@ -387,6 +388,7 @@ private:
 
   // state saved when screen saver activates
   BaseClientProxy *m_activeSaver = nullptr;
+  KeyModifierMask m_voiceModifierMask = 0;
 
   BaseClientProxy *m_switchComputer = nullptr;
   double m_switchWaitDelay = 0.0;

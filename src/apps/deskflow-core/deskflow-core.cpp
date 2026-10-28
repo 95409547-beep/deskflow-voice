@@ -16,6 +16,7 @@
 #include "deskflow/ClientApp.h"
 #include "deskflow/ServerApp.h"
 #include "deskflow/ipc/CoreIpcServer.h"
+#include "voice/control/ControlServer.h"
 
 #if defined(Q_OS_WIN)
 #include "arch/win32/ArchMiscWindows.h"
@@ -126,6 +127,17 @@ int main(int argc, char **argv)
       ipcServer, &deskflow::core::ipc::IpcServer::stopProcessRequested, coreApp, &App::quit, Qt::DirectConnection
   );
   ipcServer->listen();
+
+  const auto voiceSecretHex = qgetenv("DESKFLOW_VOICE_CONTROL_SECRET");
+  qunsetenv("DESKFLOW_VOICE_CONTROL_SECRET");
+  const auto voiceSecret = QByteArray::fromHex(voiceSecretHex);
+  if (voiceSecretHex.size() == 64 && voiceSecret.size() == 32 && voiceSecret.toHex() == voiceSecretHex) {
+    auto *voice = new deskflow::voice::control::ControlServer(
+        &app, voiceSecret, deskflow::voice::control::endpointName(app.applicationPid()), app.applicationPid(), true
+    );
+    if (!voice->listen())
+      LOG_WARN("private voice control unavailable; keyboard sharing is unchanged");
+  }
 
   QThread coreThread;
   QObject::connect(&coreThread, &QThread::finished, &app, &QApplication::quit);

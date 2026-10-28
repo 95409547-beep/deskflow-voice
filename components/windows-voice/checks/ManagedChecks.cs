@@ -15,6 +15,7 @@ internal static class ManagedChecks
         AddJson(checks, "queue", WaveQueueChecks.Run());
         AddCore(checks);
         foreach (var item in V2ProtocolChecks.Run()) checks.Add(item.Key, item.Value);
+        foreach (var item in LegacyStatusChecks.Run()) checks.Add(item.Key, item.Value);
         if (checks.Values.Any(passed => !passed)) throw new InvalidOperationException("A managed assertion failed");
         return new { Passed = checks.Count, Checks = checks, NativeRpcLoaded = false, HookInstalled = false,
             KeysSent = 0, AudioDeviceOpened = false, ListenerStarted = false, RuntimeConfigurationRead = false };

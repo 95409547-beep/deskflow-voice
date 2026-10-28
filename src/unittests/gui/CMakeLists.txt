@@ -5,6 +5,13 @@ add_subdirectory(config)
 add_subdirectory(core)
 
 create_test(
+  NAME VoiceRoutingTests
+  DEPENDS gui
+  SOURCE VoiceRoutingTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)
+
+create_test(
   NAME VoiceBackendTests
   DEPENDS gui
   SOURCE VoiceBackendTests.cpp

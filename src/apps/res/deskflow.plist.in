@@ -32,6 +32,8 @@
 	<string>@BUNDLE_COPYRIGHT@</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>按住语音键时采集所选麦克风，将声音发送到已配对的电脑。松开后停止，不保存录音。</string>
 
 	<!-- Prevent macOS from terminating during memory pressure -->
 	<key>NSSupportsAutomaticTermination</key>

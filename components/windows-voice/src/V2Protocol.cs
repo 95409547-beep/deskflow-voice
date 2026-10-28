@@ -6,7 +6,7 @@ namespace DeskflowVoice.Windows;
 
 internal sealed record V2Begin(string Session, string Sequence, string Generation);
 internal sealed class V2ProtocolException(string code) : Exception(code) { internal string Code => Message; }
-internal sealed class V2BusyException(string code) : Exception(code);
+internal sealed class V2BusyException(string code) : Exception(code) { internal string Code => Message; }
 internal sealed class V2PreflightException(string code) : Exception(code) { internal string Code => Message; }
 internal interface IV2VoiceBackend : IDisposable
 {
@@ -68,7 +68,7 @@ internal sealed class V2Protocol
             }
         }
         catch (V2ProtocolException error) { replies.Add(Error(error.Code)); }
-        catch (V2BusyException) { replies.Add(Error("microphone_busy")); }
+        catch (V2BusyException error) { var reply = Error("microphone_busy"); reply["reason"] = error.Code; replies.Add(reply); }
         catch (RepeatTargetRejectedException)
         {
             if (active is not null) replies.Add(Finish("foreground_changed", false));

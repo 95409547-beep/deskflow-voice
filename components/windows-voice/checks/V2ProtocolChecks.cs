@@ -122,6 +122,11 @@ internal static class V2ProtocolChecks
         Check("sixty-second-hold-limit-despite-audio", Type(limited, "ended") && (string)limited[0]["reason"] == "maximum_hold_60s");
         var busy = new Fixture(); busy.Backend.Busy = true;
         Check("busy-legacy-microphone-does-not-start-or-stop", Type(busy.Begin(Id()), "error") && busy.Backend.Begins == 0 && busy.Backend.Stops == 0);
+        var detailedBusy = busy.Begin(Id(), "2");
+        Check("busy-reply-keeps-compatible-error-and-specific-reason", (string)detailedBusy[0]["error"] == "microphone_busy" && (string)detailedBusy[0]["reason"] == "busy");
+        var unreadable = new Fixture(); unreadable.Begin(Id()); unreadable.Backend.Cancel = "legacy_receiver_sharing_violation";
+        var unreadableEnd = unreadable.Protocol.Tick();
+        Check("unreadable-legacy-status-not-labelled-active-session", Type(unreadableEnd, "ended") && (string)unreadableEnd[0]["reason"] == "legacy_receiver_sharing_violation" && unreadable.Backend.Stops == 1);
         var failure = new Fixture(); failure.Backend.FailBegin = true;
         var failedStart = failure.Begin(Id());
         Check("failed-start-has-no-started-ack", Type(failedStart, "error") && !(bool)failedStart[0]["ready"]);

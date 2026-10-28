@@ -76,6 +76,43 @@ void VoiceBackend::configure(const VoicePeer &peer)
   close();
   m_peer = peer;
 }
+
+void VoiceBackend::unavailable(const QString &reason)
+{
+  fail(reason);
+}
+void VoiceBackend::controlAvailable(bool available)
+{
+  if (m_controlAvailable == available)
+    return;
+  m_controlAvailable = available;
+  if (!available)
+    controlRoute({}, 0, false);
+  Q_EMIT changed();
+}
+void VoiceBackend::requireScreenRouting(bool required)
+{
+  m_routingRequired = required;
+  updateRoute();
+}
+void VoiceBackend::controlRoute(const QString &screen, quint64 generation, bool eligible)
+{
+  if (m_controlScreen == screen && m_routeGeneration == generation && m_routeEligible == eligible)
+    return;
+  m_controlScreen = screen;
+  m_routeGeneration = generation;
+  m_routeEligible = eligible;
+  updateRoute();
+  Q_EMIT changed();
+}
+void VoiceBackend::updateRoute()
+{
+  const bool allowed = m_ready && routeEligible();
+  const auto generation = m_routingRequired ? m_routeGeneration : 1;
+  effects(m_session.routeChanged(
+      {m_peer.host.toStdString(), generation, deskflow::voice::Platform::Windows, m_ready, allowed}
+  ));
+}
 void VoiceBackend::setInputUid(const QString &uid)
 {
   if (uid == m_uid)
@@ -135,6 +172,8 @@ QJsonObject VoiceBackend::roundMessage(const QString &type) const
 void VoiceBackend::press()
 {
   if (!m_ready || m_permissionPending)
+    return;
+  if (m_routingRequired && (!m_routeEligible || m_peer.screen.isEmpty() || m_peer.screen != m_controlScreen))
     return;
   if (!m_capture->permitted()) {
     m_permissionPending = true;
@@ -248,7 +287,7 @@ void VoiceBackend::message(const QJsonObject &object)
     m_deadline.stop();
     m_silentHeartbeats = 0;
     m_heartbeat.start();
-    m_session.routeChanged({m_peer.host.toStdString(), 1, deskflow::voice::Platform::Windows, true, true});
+    updateRoute();
     setStatus(tr("Windows 接收端已就绪"));
     return;
   }
@@ -287,7 +326,7 @@ void VoiceBackend::message(const QJsonObject &object)
       fail(tr("Windows 尚未完成收尾，请重新连接"));
       return;
     }
-    setStatus(m_session.pressed() ? tr("本轮已结束，请先松开") : tr("已结束，可以继续下一句"));
+    setStatus(tr("已结束，可以继续下一句"));
     Q_EMIT roundEnded(
         static_cast<quint64>(object.value(QStringLiteral("audio_bytes")).toDouble()),
         object.value(QStringLiteral("reason")).toString()

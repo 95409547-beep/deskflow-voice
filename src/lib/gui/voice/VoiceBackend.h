@@ -25,6 +25,23 @@ public:
   void close();
   void press();
   void release();
+  void requireScreenRouting(bool required);
+  void controlRoute(const QString &screen, quint64 generation, bool eligible);
+  void unavailable(const QString &reason);
+  bool routed() const
+  {
+    return m_routingRequired;
+  }
+  bool routeEligible() const
+  {
+    return !m_routingRequired || (m_controlAvailable && m_routeEligible && m_routeGeneration &&
+                                  !m_peer.screen.isEmpty() && m_peer.screen == m_controlScreen);
+  }
+  void controlAvailable(bool available);
+  bool inputReady() const
+  {
+    return m_ready && (!m_routingRequired || m_controlAvailable);
+  }
   bool ready() const
   {
     return m_ready;
@@ -32,6 +49,10 @@ public:
   bool busy() const;
   QString status() const
   {
+    if (m_ready && m_routingRequired && !m_controlAvailable)
+      return tr("等待键鼠核心准备语音键");
+    if (m_ready && m_session.phase() == deskflow::voice::Phase::ReleaseRequired)
+      return tr("本轮已结束，请先松开");
     return m_status;
   }
 Q_SIGNALS:
@@ -47,6 +68,7 @@ private:
   void fail(const QString &error);
   void setStatus(const QString &status);
   QJsonObject roundMessage(const QString &type) const;
+  void updateRoute();
   QSslSocket m_socket;
   QTimer m_deadline, m_heartbeat;
   VoiceWire m_wire;
@@ -60,5 +82,9 @@ private:
   QByteArray m_preroll;
   bool m_ready = false, m_closing = false, m_permissionPending = false;
   int m_silentHeartbeats = 0;
+  bool m_routingRequired = false, m_routeEligible = false;
+  bool m_controlAvailable = false;
+  QString m_controlScreen;
+  quint64 m_routeGeneration = 0;
 };
 } // namespace deskflow::gui::voice

@@ -70,6 +70,10 @@ if(TARGET VoiceSessionTests)
   add_test(NAME VoiceSessionTests COMMAND $<TARGET_FILE:VoiceSessionTests>)
   set_property(GLOBAL APPEND PROPERTY ${CMAKE_PROJECT_NAME}_tests VoiceSessionTests)
 endif()
+if(TARGET VoiceKeyGateTests)
+  add_test(NAME VoiceKeyGateTests COMMAND $<TARGET_FILE:VoiceKeyGateTests>)
+  set_property(GLOBAL APPEND PROPERTY ${CMAKE_PROJECT_NAME}_tests VoiceKeyGateTests)
+endif()
 
 #make sure to use CI only plugin on Unix
 if (UNIX AND NOT APPLE)

@@ -6,6 +6,7 @@
  */
 
 #include "CoreProcess.h"
+#include "voice/control/Protocol.h"
 
 #include "common/ExitCodes.h"
 #include "gui/ipc/CoreIpcClient.h"
@@ -233,6 +234,10 @@ void CoreProcess::startForegroundProcess(const QStringList &args)
   });
 #endif
 
+  auto environment = QProcessEnvironment::systemEnvironment();
+  m_voiceSecret = deskflow::voice::control::newSecret();
+  environment.insert(QStringLiteral("DESKFLOW_VOICE_CONTROL_SECRET"), QString::fromLatin1(m_voiceSecret.toHex()));
+  m_process->setProcessEnvironment(environment);
   m_process->start(m_appPath, args);
 
   if (m_process->waitForStarted()) {
@@ -637,11 +642,28 @@ void CoreProcess::setProcessState(ProcessState state)
   );
   m_processState = state;
   if (state != ProcessState::Started) {
+    m_voiceSecret.clear();
     m_connectedClients.clear();
     m_haveConnectionSnapshot = false;
     m_haveClientSnapshot = false;
   }
   Q_EMIT processStateChanged(state);
+  Q_EMIT voiceEndpointChanged();
+}
+
+qint64 CoreProcess::voiceProcessId() const
+{
+  return isStarted() && m_mode == Settings::CoreMode::Server && m_process && m_voiceSecret.size() == 32
+             ? m_process->processId()
+             : 0;
+}
+QString CoreProcess::voiceEndpointName() const
+{
+  return deskflow::voice::control::endpointName(voiceProcessId());
+}
+QByteArray CoreProcess::voiceControlSecret() const
+{
+  return voiceProcessId() > 0 ? m_voiceSecret : QByteArray();
 }
 
 bool CoreProcess::hasConnectionSnapshot() const

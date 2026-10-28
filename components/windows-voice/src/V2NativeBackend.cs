@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Deskflow Voice contributors
 // SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
 using System.Diagnostics;
-using System.Text.Json;
 
 namespace DeskflowVoice.Windows;
 
@@ -33,6 +32,7 @@ internal sealed class V2NativeBackend(V2Options options, Action<object> log) : I
             preflightPassed = true;
             log(new { type = "preflight_ready", ServicePid = verified.Pin.Pid, NativeRpcLoaded = false, AudioDeviceOpened = false });
         }
+        catch (V2BusyException error) { preflightPassed = false; throw new V2PreflightException(error.Code); }
         catch { preflightPassed = false; throw new V2PreflightException(stage); }
     }
 
@@ -96,7 +96,7 @@ internal sealed class V2NativeBackend(V2Options options, Action<object> log) : I
         if (mic.Ended) return "microphone_ended_externally";
         ForegroundTargets.Validate(target!, ProcessIdentity.TryRead, Owner);
         if ((long)Os.GetForegroundWindow() != (long)target!.Hwnd) return "foreground_changed";
-        try { LegacyIdle(); } catch (V2BusyException) { return "legacy_session_active"; }
+        try { LegacyIdle(); } catch (V2BusyException error) { return error.Code; }
         return null;
     }
     public void End(string reason, bool drain)
@@ -185,28 +185,17 @@ internal sealed class V2NativeBackend(V2Options options, Action<object> log) : I
     }
     private void LegacyIdle()
     {
-        if (options.LegacyReceiverStatus is not null)
+        Check(options.LegacyReceiverStatus, LegacyStatusKind.Receiver);
+        Check(options.LegacyControllerStatus, LegacyStatusKind.Controller);
+        void Check(string? path, LegacyStatusKind kind)
         {
-            try
-            {
-                using var status = JsonDocument.Parse(File.ReadAllText(options.LegacyReceiverStatus));
-                var root = status.RootElement;
-                if (!root.GetProperty("running").GetBoolean() ||
-                    root.GetProperty("session").ValueKind != JsonValueKind.Null || root.GetProperty("cancelled_session").ValueKind != JsonValueKind.Null ||
-                    DateTime.UtcNow - root.GetProperty("utc").GetDateTime().ToUniversalTime() > TimeSpan.FromSeconds(10)) throw new V2BusyException("legacy_receiver_busy");
-            }
-            catch { throw new V2BusyException("legacy_receiver_not_idle"); }
-        }
-        if (options.LegacyControllerStatus is not null)
-        {
-            try
-            {
-                using var status = JsonDocument.Parse(File.ReadAllText(options.LegacyControllerStatus));
-                var root = status.RootElement; var state = root.GetProperty("State").GetString();
-                if (state != "ready" && !((state is "waiting-for-next-down" or "round-completed") && root.GetProperty("Data").GetProperty("ReadyForNext").GetBoolean()))
-                    throw new V2BusyException("legacy_controller_busy");
-            }
-            catch { throw new V2BusyException("legacy_controller_not_idle"); }
+            if (path is null) return;
+            var result = LegacyStatus.Check(kind, () => LegacyStatus.ReadFile(path), () => Environment.TickCount64,
+                () => DateTimeOffset.UtcNow, Thread.Sleep,
+                observation => log(new { type = "legacy_status_check", source = kind.ToString().ToLowerInvariant(),
+                    reason = observation.Code, attempt = observation.Attempt, elapsed_ms = observation.ElapsedMs,
+                    retrying = observation.Retrying, field = observation.Field, io_hresult = observation.IoHResult }));
+            if (!result.Idle) throw new V2BusyException(result.Code);
         }
     }
     private void Release()

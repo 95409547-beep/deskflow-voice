@@ -40,6 +40,9 @@ class MainWindow;
 namespace deskflow::gui::ipc {
 class DaemonIpcClient;
 }
+namespace deskflow::gui::voice {
+class VoiceService;
+}
 
 class MainWindow : public QMainWindow
 {
@@ -172,6 +175,7 @@ private:
   bool m_clientErrorVisible = false;
   ServerConfig m_serverConfig;
   deskflow::gui::CoreProcess m_coreProcess;
+  deskflow::gui::voice::VoiceService *m_voiceService = nullptr;
   QSet<QString> m_ignoredClients;
   bool m_newClientPromptShowing = false;
   bool m_serverConfigDialogVisible = false;

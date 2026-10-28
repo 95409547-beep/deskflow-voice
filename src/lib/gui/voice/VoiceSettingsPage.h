@@ -42,10 +42,11 @@ public:
   void setWritable(bool writable);
   void setConnectionSnapshot(const ConnectionSnapshot &snapshot);
   bool serviceReady() const;
-  void bindBackend(VoiceBackend *backend);
+  void bindBackend(VoiceBackend *backend, bool liveControls = true);
 
 Q_SIGNALS:
   void preferencesChanged();
+  void reconnectRequested();
 
 private:
   bool sending() const;
@@ -73,7 +74,10 @@ private:
   QPushButton *m_action;
   QPushButton *m_talk;
   QLabel *m_serviceLabel;
+  QLabel *m_startup;
+  QLabel *m_detailsText;
   QPointer<VoiceBackend> m_backend;
+  bool m_liveControls = true;
 };
 
 } // namespace deskflow::gui::voice

@@ -72,6 +72,9 @@ public:
   // These describe the current structured IPC generation, not parsed logs.
   bool hasConnectionSnapshot() const;
   QStringList connectedClients() const;
+  QString voiceEndpointName() const;
+  QByteArray voiceControlSecret() const;
+  qint64 voiceProcessId() const;
 
   // setters
   void setAddress(const QString &address)
@@ -81,6 +84,7 @@ public:
   void setMode(Settings::CoreMode mode)
   {
     m_mode = mode;
+    Q_EMIT voiceEndpointChanged();
   }
 
 Q_SIGNALS:
@@ -97,6 +101,7 @@ Q_SIGNALS:
   void retryIn(int seconds);
   void peerFingerprint(const QString &fingerprint);
   void missingKeyboardLayouts(const QString &layouts);
+  void voiceEndpointChanged();
 
 private Q_SLOTS:
   void onProcessFinished(int exitCode, QProcess::ExitStatus);
@@ -140,6 +145,7 @@ private:
   QStringList m_connectedClients;
   bool m_haveConnectionSnapshot = false;
   bool m_haveClientSnapshot = false;
+  QByteArray m_voiceSecret;
 };
 
 } // namespace deskflow::gui

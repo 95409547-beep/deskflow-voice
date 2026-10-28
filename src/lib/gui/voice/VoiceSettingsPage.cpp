@@ -122,19 +122,19 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   m_shortcut->addItem(tr("右 Ctrl"), QStringLiteral("right-control"));
 #endif
   settingsForm->addRow(tr("按住说话键"), m_shortcut);
-  auto *startup = new QLabel(tr("登录准备将在语音后台接入后提供"), this);
-  startup->setWordWrap(true);
-  settingsForm->addRow(tr("自动准备"), startup);
+  m_startup = new QLabel(tr("登录准备将在语音后台接入后提供"), this);
+  m_startup->setWordWrap(true);
+  settingsForm->addRow(tr("自动准备"), m_startup);
   settingsLayout->addLayout(settingsForm);
   auto *details = new QGroupBox(tr("开发状态"), this);
   details->setCheckable(true);
   details->setChecked(false);
   auto *detailsLayout = new QVBoxLayout(details);
-  auto *detailsText = new QLabel(tr("当前仅枚举系统声音设备并读取核心 IPC 状态，不录音、发键或启动语音。"), details);
-  detailsText->setWordWrap(true);
-  detailsText->setVisible(false);
-  detailsLayout->addWidget(detailsText);
-  connect(details, &QGroupBox::toggled, detailsText, &QLabel::setVisible);
+  m_detailsText = new QLabel(tr("当前仅枚举系统声音设备并读取核心 IPC 状态，不录音、发键或启动语音。"), details);
+  m_detailsText->setWordWrap(true);
+  m_detailsText->setVisible(false);
+  detailsLayout->addWidget(m_detailsText);
+  connect(details, &QGroupBox::toggled, m_detailsText, &QLabel::setVisible);
   settingsLayout->addWidget(details);
   settingsLayout->addStretch();
   m_tabs->addTab(settings, tr("设置"));
@@ -148,11 +148,11 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   connect(m_enabled, &QCheckBox::toggled, this, changed);
   connect(m_input, &QComboBox::currentIndexChanged, this, changed);
   connect(m_input, &QComboBox::currentIndexChanged, this, [this] {
-    if (!m_loading && m_backend)
+    if (!m_loading && m_liveControls && m_backend)
       m_backend->setInputUid(m_input->currentData().toString());
   });
   connect(m_enabled, &QCheckBox::toggled, this, [this](bool enabled) {
-    if (!m_loading && !enabled && m_backend)
+    if (!m_loading && m_liveControls && !enabled && m_backend)
       m_backend->close();
   });
   connect(m_target, &QComboBox::currentIndexChanged, this, changed);
@@ -167,9 +167,12 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   connect(m_action, &QPushButton::clicked, this, [this] {
     if (!m_enabled->isChecked() && m_writable)
       m_enabled->setChecked(true);
-    if (m_backend && m_enabled->isChecked())
-      m_backend->connectPeer();
-    else
+    if (m_backend && m_enabled->isChecked()) {
+      if (m_liveControls)
+        m_backend->connectPeer();
+      else
+        Q_EMIT reconnectRequested();
+    } else
       m_tabs->setCurrentIndex(1);
   });
   connect(m_talk, &QPushButton::pressed, this, [this] {
@@ -311,17 +314,23 @@ bool SettingsPage::sourcePresent() const
 
 bool SettingsPage::serviceReady() const
 {
-  return m_backend && m_backend->ready();
+  return m_backend && m_backend->inputReady();
 }
 
-void SettingsPage::bindBackend(VoiceBackend *backend)
+void SettingsPage::bindBackend(VoiceBackend *backend, bool liveControls)
 {
   if (m_backend)
     disconnect(m_backend, nullptr, this, nullptr);
   m_backend = backend;
+  m_liveControls = liveControls;
   refreshPeers();
   if (backend) {
-    backend->setInputUid(m_input->currentData().toString());
+    m_startup->setText(
+        backend->routed() ? tr("随本软件准备；开机启动将在安装器中提供。") : tr("当前使用独立测试窗口。")
+    );
+    m_detailsText->setText(tr("声音发送到配对电脑。按住时收音，松开后停止。"));
+    if (liveControls)
+      backend->setInputUid(m_input->currentData().toString());
     connect(backend, &VoiceBackend::changed, this, &SettingsPage::refreshStatus);
     connect(backend, &QObject::destroyed, this, &SettingsPage::refreshStatus);
   }
@@ -355,13 +364,17 @@ void SettingsPage::refreshStatus()
 #endif
   m_hint->setText(m_enabled->isChecked() ? tr("此开发构建尚未接入语音后台。") : tr("先检查电脑连接与声音来源。"));
   m_action->setText(m_enabled->isChecked() ? tr("检查设备") : tr("开始使用"));
-  m_talk->setVisible(m_backend && serviceReady() && m_enabled->isChecked());
+  m_talk->setVisible(m_backend && !m_backend->routed() && serviceReady() && m_enabled->isChecked());
   m_talk->setEnabled(m_writable && sender && sourcePresent());
   m_action->setVisible(!m_backend || !serviceReady() || !m_enabled->isChecked());
   m_serviceLabel->setText(serviceReady() ? tr("接收端已就绪") : tr("等待接收端"));
   if (m_backend && m_enabled->isChecked()) {
     m_title->setText(m_backend->status());
-    m_hint->setText(tr("%1 · 按住试说，松开结束。").arg(m_input->currentText()));
+    m_hint->setText(
+        m_backend->routed()
+            ? tr("%1 · 到 Windows 按住 %2 说话。").arg(m_input->currentText(), m_shortcut->currentText())
+            : tr("%1 · 按住试说，松开结束。").arg(m_input->currentText())
+    );
     m_action->setText(tr("连接语音"));
   }
 }
