@@ -1,6 +1,6 @@
 # 公共语音会话接口
 
-状态：纯 C++ 模型已接入独立开发窗口的 CoreAudio/Qt TLS 发送端；Windows V2 提供带启动/结束确认的输入法与音频适配。Deskflow屏幕路由、全局按住事件与产品生命周期尚未绑定，真实普通麦克风连续输入待验收。见[开发验证记录](../build/voice-runtime.md)。
+状态：纯 C++ 模型已接入独立开发窗口的 CoreAudio/Qt TLS 发送端；Windows V2 提供带启动/结束确认的输入法与音频适配。普通USB麦克风连续两句输入及松开停止已获真人确认；Deskflow屏幕路由、全局按住事件与产品生命周期尚未绑定。见[开发验证记录](../build/voice-runtime.md)。
 
 `src/lib/voice/Session` 接受平台与会话事件，返回待执行的 Effect。模型本身不打开设备、加载原生 DLL、发键、建立网络连接或调用输入法，因此适合在 Mac、Windows 和 CI 中检查相同规则。
 
