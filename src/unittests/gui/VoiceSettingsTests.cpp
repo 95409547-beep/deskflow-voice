@@ -86,7 +86,11 @@ private Q_SLOTS:
     page.setConnectionSnapshot({true, true, true, {QStringLiteral("fixture-peer")}});
     QCOMPARE(page.findChild<QLabel *>(QStringLiteral("voiceControlConnection"))->text(), QStringLiteral("键鼠已连接"));
     QVERIFY(!page.serviceReady());
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
     QVERIFY(page.findChild<QLabel *>(QStringLiteral("voiceStatus"))->text().contains(QStringLiteral("未就绪")));
+#else
+    QVERIFY(page.findChild<QLabel *>(QStringLiteral("voiceStatus"))->text().contains(QStringLiteral("不支持")));
+#endif
     page.setConnectionSnapshot({false, false, true, {QStringLiteral("stale-peer")}});
     auto *target = page.findChild<QComboBox *>(QStringLiteral("voiceTarget"));
     QCOMPARE(target->findData(QStringLiteral("stale-peer")), -1);

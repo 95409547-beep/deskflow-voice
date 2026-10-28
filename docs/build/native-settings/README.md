@@ -38,6 +38,8 @@ QT_QPA_PLATFORM=offscreen ./VoiceSettingsPreview --render-dialog /tmp/voice-dial
 
 机器可读记录见 [validation.json](validation.json)。Mac 本地结果不替代 Windows 编译；后者以本分支当前提交的 CI 为准，也不替代 Windows 实机验收。
 
+2026-10-28 续接：`82625a5` 的 Mac ARM64/Intel CI 成功；Windows 编译因属性键头文件缺少前置声明失败，Linux 设置测试因误用受支持平台的文案断言失败。已分别补齐 SDK 头文件顺序和平台条件，Mac 设置回归再次通过；修正后的其他平台结果继续以当前提交 Checks 为准。旧提交的总工作流失败没有记作通过。
+
 ## 下一步
 
 接入统一语音服务状态和请求接口，完成会话确认、连接代次与异常收尾；先接通 Mac 普通麦克风 → Windows 输入法，再接 Windows 发送端和第二台 Windows。产品界面的启用、试说与故障引导需跟随真实服务状态，之后再完善安装、登录准备、产品身份、签名与干净机器验收。现有可用的私人原型部署没有被这一批替换或重启。

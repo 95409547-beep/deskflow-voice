@@ -11,11 +11,15 @@
 #include <CoreAudio/CoreAudio.h>
 #include <CoreFoundation/CoreFoundation.h>
 #elif defined(Q_OS_WIN)
+#include <windows.h>
+
+// The property-key catalog requires DEFINE_PROPERTYKEY before inclusion.
+#include <propkeydef.h>
+
 #include <functiondiscoverykeys_devpkey.h>
 #include <mmdeviceapi.h>
 #include <propsys.h>
 #include <propvarutil.h>
-#include <windows.h>
 #include <wrl/client.h>
 #endif
 
