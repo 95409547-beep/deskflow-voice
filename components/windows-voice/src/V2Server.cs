@@ -64,7 +64,10 @@ internal static class V2Server
             File.AppendAllText(Path.Combine(options.StateDirectory, "events.jsonl"), line + Environment.NewLine);
             Console.WriteLine(line);
         }
-        using var certificate = X509CertificateLoader.LoadPkcs12FromFile(options.CertificatePath, options.CertificatePassword, X509KeyStorageFlags.EphemeralKeySet);
+        // Match the working Windows receiver: Schannel cannot use this PFX's
+        // ephemeral private-key handle. UserKeySet imports no certificate store entry.
+        using var certificate = X509CertificateLoader.LoadPkcs12FromFile(options.CertificatePath, options.CertificatePassword, X509KeyStorageFlags.UserKeySet);
+        if (!certificate.HasPrivateKey) throw new InvalidDataException("Server certificate has no private key");
         if (!string.Equals(certificate.GetCertHashString(HashAlgorithmName.SHA256), options.CertificateSha256, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("Server certificate fingerprint mismatch");
         using var cancellation = new CancellationTokenSource();
@@ -150,7 +153,8 @@ internal static class V2Server
                 }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             }
         }
-        catch (Exception error) { log(new { type = "client_closed", error = error.GetType().Name, epoch = protocol?.Epoch }); }
+        catch (Exception error) { log(new { type = "client_closed", error = error.GetType().Name,
+            hresult = error.HResult, inner_error = error.InnerException?.GetType().Name, inner_hresult = error.InnerException?.HResult, epoch = protocol?.Epoch }); }
         finally { protocol?.Close(); }
     }
 }
