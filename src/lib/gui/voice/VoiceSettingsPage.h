@@ -7,6 +7,7 @@
 #include "AudioDeviceQuery.h"
 #include "VoicePreferences.h"
 
+#include <QPointer>
 #include <QWidget>
 #include <functional>
 
@@ -17,6 +18,7 @@ class QPushButton;
 class QTabWidget;
 
 namespace deskflow::gui::voice {
+class VoiceBackend;
 
 struct ConnectionSnapshot
 {
@@ -40,6 +42,7 @@ public:
   void setWritable(bool writable);
   void setConnectionSnapshot(const ConnectionSnapshot &snapshot);
   bool serviceReady() const;
+  void bindBackend(VoiceBackend *backend);
 
 Q_SIGNALS:
   void preferencesChanged();
@@ -68,6 +71,9 @@ private:
   QLabel *m_connectionLabel;
   QLabel *m_sourceLabel;
   QPushButton *m_action;
+  QPushButton *m_talk;
+  QLabel *m_serviceLabel;
+  QPointer<VoiceBackend> m_backend;
 };
 
 } // namespace deskflow::gui::voice

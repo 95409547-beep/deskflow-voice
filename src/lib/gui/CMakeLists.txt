@@ -10,6 +10,7 @@ if(APPLE)
   set (platform_sources
     OSXHelpers.h
     OSXHelpers.mm
+    voice/AudioCaptureMac.mm
   )
 endif()
 
@@ -117,6 +118,12 @@ add_library(${target} STATIC
   widgets/SettingsDialogButtonBox.h
   voice/AudioDeviceQuery.cpp
   voice/AudioDeviceQuery.h
+  voice/AudioCapture.cpp
+  voice/AudioCapture.h
+  voice/VoiceBackend.cpp
+  voice/VoiceBackend.h
+  voice/VoiceWire.cpp
+  voice/VoiceWire.h
   voice/VoicePreferences.cpp
   voice/VoicePreferences.h
   voice/VoiceSettingsPage.cpp
@@ -129,10 +136,12 @@ target_link_libraries(${target}
     platform
     net
     Qt6::Widgets
+    Qt6::Network
+    voice_core
 )
 
 if(APPLE)
-  target_link_libraries(${target} PRIVATE "-framework CoreAudio" "-framework CoreFoundation")
+  target_link_libraries(${target} PRIVATE "-framework CoreAudio" "-framework CoreFoundation" "-framework AudioToolbox" "-framework AVFoundation")
 elseif(WIN32)
   target_link_libraries(${target} PRIVATE ole32 propsys uuid)
 endif()
