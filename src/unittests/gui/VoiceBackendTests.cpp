@@ -85,9 +85,11 @@ private Q_SLOTS:
     QTRY_COMPARE_WITH_TIMEOUT(receiver.begins, 1, 3000);
     receiver.ended();
     QTRY_VERIFY_WITH_TIMEOUT(!capture->active, 3000);
+    QVERIFY(backend.status().contains(QStringLiteral("请先松开")));
     backend.press();
     QCOMPARE(capture->starts, 1);
     backend.release();
+    QCOMPARE(backend.status(), QStringLiteral("已结束，可以继续下一句"));
     backend.press();
     QTRY_COMPARE_WITH_TIMEOUT(receiver.begins, 2, 3000);
     backend.release();

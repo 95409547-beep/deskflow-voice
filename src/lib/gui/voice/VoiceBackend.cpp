@@ -326,7 +326,7 @@ void VoiceBackend::message(const QJsonObject &object)
       fail(tr("Windows 尚未完成收尾，请重新连接"));
       return;
     }
-    setStatus(m_session.pressed() ? tr("本轮已结束，请先松开") : tr("已结束，可以继续下一句"));
+    setStatus(tr("已结束，可以继续下一句"));
     Q_EMIT roundEnded(
         static_cast<quint64>(object.value(QStringLiteral("audio_bytes")).toDouble()),
         object.value(QStringLiteral("reason")).toString()

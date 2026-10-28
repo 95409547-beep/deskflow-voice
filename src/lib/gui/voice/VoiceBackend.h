@@ -51,6 +51,8 @@ public:
   {
     if (m_ready && m_routingRequired && !m_controlAvailable)
       return tr("等待键鼠核心准备语音键");
+    if (m_ready && m_session.phase() == deskflow::voice::Phase::ReleaseRequired)
+      return tr("本轮已结束，请先松开");
     return m_status;
   }
 Q_SIGNALS:
