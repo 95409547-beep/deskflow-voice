@@ -17,7 +17,8 @@ try {
     [void](New-Item -ItemType Directory -Path $fixture)
     Copy-Item -LiteralPath $package -Destination $app -Recurse
     [void](New-Item -ItemType Directory -Path $profile)
-    [IO.File]::WriteAllText((Join-Path $profile 'Deskflow Voice.conf'),"[core]`nlanguage=zh_CN`n[gui]`nstartCoreWithGui=false`n[voice]`nenabled=false`n",[Text.UTF8Encoding]::new($false))
+    $receiverFixture='receiver-fixture.json'
+    [IO.File]::WriteAllText((Join-Path $profile 'Deskflow Voice.conf'),"[core]`nlanguage=zh_CN`n[gui]`nstartCoreWithGui=false`n[voice]`nenabled=false`nreceiverFile=$receiverFixture`n",[Text.UTF8Encoding]::new($false))
     [void](New-Item -ItemType Junction -Path $junction -Value $profile)
     $start=[Diagnostics.ProcessStartInfo]::new((Join-Path $app 'deskflow.exe'))
     $start.UseShellExecute=$false;$start.CreateNoWindow=$true
@@ -33,7 +34,11 @@ try {
     }
     if($process.ExitCode -ne 0 -or $output.GetAwaiter().GetResult() -notmatch 'Deskflow Voice:') {throw 'portable_settings_junction_version_failed'}
     [void]$errors.GetAwaiter().GetResult()
-    [pscustomobject]@{JunctionStartupAndExitPassed=$true;ExitCode=0;VoiceEnabled=$false;CoreAutoStart=$false}
+    $saved=[IO.File]::ReadAllText((Join-Path $profile 'Deskflow Voice.conf'))
+    $receiverMatch=[regex]::Match($saved,'(?m)^receiverFile=([^\r\n]+)')
+    if(-not $receiverMatch.Success){throw 'installed_receiver_path_removed_on_startup'}
+    if($receiverMatch.Groups[1].Value -cne $receiverFixture){throw 'installed_receiver_path_changed_on_startup'}
+    [pscustomobject]@{JunctionStartupAndExitPassed=$true;ReceiverPathPreserved=$true;ExitCode=0;VoiceEnabled=$false;CoreAutoStart=$false}
 } finally {
     if($process){$process.Dispose()}
     if(Test-Path -LiteralPath $junction){[IO.Directory]::Delete($junction,$false)}

@@ -286,6 +286,7 @@ private:
   inline static const QStringList m_validKeys = {
       Voice::Enabled
     , Voice::PeerFile
+    , Voice::ReceiverFile
     , Voice::Role
     , Voice::InputUid
     , Voice::TargetComputer
