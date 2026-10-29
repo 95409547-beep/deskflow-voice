@@ -61,6 +61,8 @@ def main():
     values.set('gui', 'autoHide', 'false')
     values.set('gui', 'enableUpdateCheck', 'false')
     values.set('gui', 'closeToTray', 'true')
+    values.set('gui', 'logExpanded', 'false')
+    values.set('log', 'guiDebug', 'false')
     values.set('security', 'certificate', str(certificate))
     values.set('log', 'toFile', 'false')
     output = destination / 'Deskflow Voice.conf'

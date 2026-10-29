@@ -1564,11 +1564,11 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>已找到声音来源，尚未收音</source>
+        <source>设备已连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>声音来源不可用，请连接或更换设备</source>
+        <source>设备不可用，请更换</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

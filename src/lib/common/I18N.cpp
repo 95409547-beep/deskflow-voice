@@ -31,12 +31,12 @@ I18N::I18N(QObject *parent) : QObject{parent}
       {QStringLiteral("%1/%2").arg(appDir, QStringLiteral("translations"))},
       {QStringLiteral("%1/../translations").arg(appDir)},
       {QStringLiteral("%1/../Resources/translations").arg(appDir)},
-      {QStringLiteral("%1/../share/%2/translations").arg(appDir, kAppId)},
-      {QStringLiteral("%1/.local/share/%2/translations").arg(homeDir, kAppId)},
-      {QStringLiteral("/usr/local/share/%1/translations").arg(kAppId)},
-      {QStringLiteral("/usr/share/%1/translations").arg(kAppId)}
+      {QStringLiteral("%1/../share/%2/translations").arg(appDir, kResourceId)},
+      {QStringLiteral("%1/.local/share/%2/translations").arg(homeDir, kResourceId)},
+      {QStringLiteral("/usr/local/share/%1/translations").arg(kResourceId)},
+      {QStringLiteral("/usr/share/%1/translations").arg(kResourceId)}
   };
-  const QStringList appTrFilter{QStringLiteral("%1*.qm").arg(kAppId)};
+  const QStringList appTrFilter{QStringLiteral("%1*.qm").arg(kResourceId)};
 
   for (const auto &dir : appTrDirs) {
     if (!dir.entryList(appTrFilter, QDir::Files, QDir::Name).isEmpty()) {
@@ -84,7 +84,7 @@ I18N::I18N(QObject *parent) : QObject{parent}
 
   if (Settings::value(Settings::Core::Language).toString().isEmpty()) {
     auto appTranslator = new QTranslator(this);
-    if (appTranslator->load(QLocale(), kAppId, s_prefix, m_appTrPath)) {
+    if (appTranslator->load(QLocale(), kResourceId, s_prefix, m_appTrPath)) {
       m_currentTranslations.append(appTranslator);
       QCoreApplication::installTranslator(appTranslator);
     }
@@ -173,7 +173,7 @@ void I18N::detectLanguages()
   m_translations.clear();
   m_nameMap.clear();
 
-  QStringList nameFilter = {QStringLiteral("%1_*.qm").arg(kAppId)};
+  QStringList nameFilter = {QStringLiteral("%1_*.qm").arg(kResourceId)};
   QMap<QString, QString> appTranslations;
   QStringList detectedLangCodes;
   QDir dir(m_appTrPath);

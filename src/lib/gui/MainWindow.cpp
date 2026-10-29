@@ -796,7 +796,7 @@ void MainWindow::setTrayIcon()
     if (deskflow::platform::isMac())
       m_trayIcon->setIcon(QIcon::fromTheme(themeIcon));
     else
-      m_trayIcon->setIcon(QIcon(fallbackPath.arg(kAppId, QStringLiteral("dark"), themeIcon)));
+      m_trayIcon->setIcon(QIcon(fallbackPath.arg(kResourceId, QStringLiteral("dark"), themeIcon)));
     return;
   }
 
@@ -809,11 +809,11 @@ void MainWindow::setTrayIcon()
     );
     const QString theme = settings.value(QStringLiteral("SystemUsesLightTheme"), 1).toBool() ? QStringLiteral("light")
                                                                                              : QStringLiteral("dark");
-    m_trayIcon->setIcon(QIcon(fallbackPath.arg(kAppId, theme, themeIcon)));
+    m_trayIcon->setIcon(QIcon(fallbackPath.arg(kResourceId, theme, themeIcon)));
     return;
   }
 
-  auto icon = QIcon::fromTheme(themeIcon, QIcon(fallbackPath.arg(kAppId, iconMode(), themeIcon)));
+  auto icon = QIcon::fromTheme(themeIcon, QIcon(fallbackPath.arg(kResourceId, iconMode(), themeIcon)));
   icon.setIsMask(true);
   m_trayIcon->setIcon(icon);
 }

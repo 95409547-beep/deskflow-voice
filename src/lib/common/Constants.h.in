@@ -9,6 +9,8 @@
 
 const auto kAppName = "@DESKFLOW_APP_NAME@";
 const auto kAppId = "@DESKFLOW_APP_ID@";
+// Packaged resources keep their upstream prefix, independently of runtime IDs.
+const auto kResourceId = "@CMAKE_PROJECT_NAME@";
 constexpr bool kVoiceProduct = @DESKFLOW_VOICE_PRODUCT_VALUE@;
 const auto kAppDescription = "@CMAKE_PROJECT_DESCRIPTION@";
 const auto kDaemonBinName = "@CMAKE_PROJECT_NAME@-daemon";

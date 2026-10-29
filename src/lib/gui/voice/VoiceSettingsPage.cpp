@@ -381,8 +381,8 @@ void SettingsPage::refreshStatus()
   m_sourceLabel->setText(
       !sender                     ? tr("声音来源在发送端设置")
       : !m_inputs.error.isEmpty() ? m_inputs.error
-      : sourcePresent()           ? tr("已找到声音来源，尚未收音")
-                                  : tr("声音来源不可用，请连接或更换设备")
+      : sourcePresent()           ? tr("设备已连接")
+                                  : tr("设备不可用，请更换")
   );
 #if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
   m_title->setText(tr("当前平台尚不支持语音"));
