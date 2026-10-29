@@ -12,6 +12,8 @@ if(APPLE)
     OSXHelpers.mm
     voice/AudioCaptureMac.mm
   )
+elseif(WIN32)
+  set(platform_sources voice/AudioCaptureWindows.cpp)
 endif()
 
 add_library(${target} STATIC
@@ -120,6 +122,7 @@ add_library(${target} STATIC
   voice/AudioDeviceQuery.h
   voice/AudioCapture.cpp
   voice/AudioCapture.h
+  voice/AudioCaptureQueue.h
   voice/VoiceBackend.cpp
   voice/VoiceBackend.h
   voice/VoiceWire.cpp

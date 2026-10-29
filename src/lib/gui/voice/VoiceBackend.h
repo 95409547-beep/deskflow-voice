@@ -17,7 +17,19 @@ class VoiceBackend : public QObject
 {
   Q_OBJECT
 public:
-  explicit VoiceBackend(QObject *parent = nullptr, AudioCapture *capture = nullptr);
+  static constexpr deskflow::voice::Platform senderPlatform()
+  {
+#if defined(Q_OS_MACOS)
+    return deskflow::voice::Platform::MacOS;
+#elif defined(Q_OS_WIN)
+    return deskflow::voice::Platform::Windows;
+#else
+    return deskflow::voice::Platform::Unsupported;
+#endif
+  }
+  explicit VoiceBackend(
+      QObject *parent = nullptr, AudioCapture *capture = nullptr, deskflow::voice::Platform sender = senderPlatform()
+  );
   ~VoiceBackend() override;
   void configure(const VoicePeer &peer);
   void setInputUid(const QString &uid);
@@ -74,7 +86,7 @@ private:
   VoiceWire m_wire;
   VoicePeer m_peer;
   AudioCapture *m_capture;
-  deskflow::voice::Session m_session{deskflow::voice::Platform::MacOS};
+  deskflow::voice::Session m_session;
   QString m_epoch, m_round, m_uid, m_status;
   QSet<QString> m_completed;
   QStringList m_completedOrder;

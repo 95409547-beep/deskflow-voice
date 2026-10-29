@@ -1730,6 +1730,10 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>接收语音由 Windows 语音组件提供</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>配对信息尚未绑定 Deskflow 电脑</source>
         <translation type="unfinished"></translation>
     </message>
