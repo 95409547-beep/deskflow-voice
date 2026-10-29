@@ -513,6 +513,17 @@ QString Settings::portableSettingsFile()
 {
   static const auto filename =
       QStringLiteral("%1/settings/%2.conf").arg(QCoreApplication::applicationDirPath(), kAppName);
+#ifdef Q_OS_WIN
+  if (kVoiceProduct) {
+    // Keep GUI, core and QSettings lock creation on the junction's real target.
+    // canonicalFilePath() does not resolve parent junctions on Windows.
+    const QFileInfo file(filename);
+    const QFileInfo directory(file.absolutePath());
+    const auto target = directory.junctionTarget();
+    if (!target.isEmpty())
+      return QDir(target).absoluteFilePath(file.fileName());
+  }
+#endif
   return QFileInfo(filename).absoluteFilePath();
 }
 
