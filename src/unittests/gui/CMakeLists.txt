@@ -5,6 +5,23 @@ add_subdirectory(config)
 add_subdirectory(core)
 
 create_test(
+  NAME AudioCaptureQueueTests
+  DEPENDS gui
+  SOURCE AudioCaptureQueueTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)
+
+if(WIN32)
+  # Deliberately nonexistent endpoint IDs only: never opens a microphone.
+  create_test(
+    NAME AudioCaptureWindowsTests
+    DEPENDS gui
+    SOURCE AudioCaptureWindowsTests.cpp
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+  )
+endif()
+
+create_test(
   NAME VoiceRoutingTests
   DEPENDS gui
   SOURCE VoiceRoutingTests.cpp

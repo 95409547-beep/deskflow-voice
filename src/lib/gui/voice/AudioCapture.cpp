@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
  */
 #include "AudioCapture.h"
-#ifndef Q_OS_MACOS
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
 namespace deskflow::gui::voice {
 class UnavailableCapture final : public AudioCapture
 {

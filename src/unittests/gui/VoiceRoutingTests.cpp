@@ -84,7 +84,7 @@ private Q_SLOTS:
     auto peer = receiver.peer();
     peer.screen = QStringLiteral("Windows");
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(peer);
     VoiceRouting routing(backend);
     routing.configure(true, peer.screen, QStringLiteral("F8"));
@@ -133,7 +133,7 @@ private Q_SLOTS:
     auto peer = receiver.peer();
     peer.screen = QStringLiteral("Windows");
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(peer);
     VoiceRouting routing(backend);
     routing.configure(true, peer.screen, QStringLiteral("F8"));
@@ -170,7 +170,7 @@ private Q_SLOTS:
     auto peer = receiver.peer();
     peer.screen = QStringLiteral("Windows");
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(peer);
     VoiceRouting routing(backend);
     routing.configure(true, peer.screen, QStringLiteral("F8"));
@@ -205,7 +205,7 @@ private Q_SLOTS:
     auto peer = receiver.peer();
     peer.screen = QStringLiteral("Windows");
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(peer);
     VoiceRouting routing(backend);
     routing.configure(true, peer.screen, QStringLiteral("F8"));
@@ -237,7 +237,7 @@ private Q_SLOTS:
     auto peer = receiver.peer();
     peer.screen = QStringLiteral("Windows");
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(peer);
     VoiceRouting routing(backend);
     routing.configure(true, peer.screen, QStringLiteral("F8"));
@@ -269,7 +269,7 @@ private Q_SLOTS:
   {
     LoopbackReceiver receiver;
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(receiver.peer());
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);

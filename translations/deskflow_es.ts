@@ -1729,6 +1729,10 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>接收语音由 Windows 语音组件提供</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>配对信息尚未绑定 Deskflow 电脑</source>
         <translation type="unfinished"></translation>
     </message>

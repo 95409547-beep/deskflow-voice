@@ -2,7 +2,7 @@
 
 Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Windows → Windows**，Windows → Mac 留给后续版本。
 
-当前是产品开发阶段，**还没有可供普通用户安装的完整语音发行版**。Mac普通USB麦克风已在独立开发窗口、主GUI全局F8两种入口分别通过连续两句真人输入与松开停止；按住切回Mac停止和重新按键输入也已通过。空闲重启与界面重开已恢复连接且未自动录音，断网等异常回归继续。Windows → Windows 发送端尚未接入。
+当前是产品开发阶段，**还没有可供普通用户安装的完整语音发行版**。Mac普通USB麦克风已在独立开发窗口、主GUI全局F8两种入口分别通过连续两句真人输入与松开停止；按住切回Mac停止和重新按键输入也已通过。空闲重启与界面重开已恢复连接且未自动录音，断网等异常回归继续。Windows麦克风发送端已接入源码，Windows → Windows 双机真人输入尚未验收。
 
 ## 已落地
 
@@ -16,6 +16,7 @@ Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Wi
 - 原生 Qt 设置已接入分页、配置保存、只读麦克风枚举与结构化键鼠连接状态；主GUI现已绑定后台，只有私有控制和接收端都准备好才显示就绪。
 - 新增普通麦克风开发链路：CoreAudio、Qt固定证书TLS、Windows V2直接输入法控制和原生按住试说；已通过普通USB麦克风连续两句真人输入与松开停止。
 - 新增Deskflow核心按住键与屏幕路由：全局F8连续输入、松开停止、按住时切屏停止与重新按键输入已通过真人验收；空闲核心/界面重开已检查自动连通且不自动录音，其他异常与正式安装尚待验收。
+- 新增Windows WASAPI麦克风发送实现，复用原有配对、TLS与会话控制；包含独立轮次收音队列、积压停止、设备失效处理和不打开真实麦克风的自动检查。具体构建与验收边界见Windows发送端说明。
 
 ## 检查公共会话模块
 
@@ -37,6 +38,7 @@ ctest --test-dir build/voice -C Release --output-on-failure
 - [原生设置、设备检测与布局检查](docs/build/native-settings/README.md)
 - [真实语音后台的开发入口与验证边界](docs/build/voice-runtime.md)
 - [Deskflow屏幕路由、全局键与主GUI接线](docs/build/voice-routing.md)
+- [Windows麦克风发送端与双Windows验收](docs/build/windows-sender.md)
 - [Windows 独立组件构建](components/windows-voice/README.md)
 - [本批工程验证记录](docs/build/foundation-validation.md)
 - [语音界面交互原型与设计说明](docs/prototypes/cross-device-voice/README.md)

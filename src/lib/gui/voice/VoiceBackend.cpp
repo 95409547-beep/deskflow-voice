@@ -14,9 +14,10 @@ namespace deskflow::gui::voice {
 using deskflow::voice::EffectKind;
 using deskflow::voice::Phase;
 
-VoiceBackend::VoiceBackend(QObject *parent, AudioCapture *capture)
+VoiceBackend::VoiceBackend(QObject *parent, AudioCapture *capture, deskflow::voice::Platform sender)
     : QObject(parent),
-      m_capture(capture ? capture : createAudioCapture(this))
+      m_capture(capture ? capture : createAudioCapture(this)),
+      m_session(sender)
 {
   if (capture)
     capture->setParent(this);

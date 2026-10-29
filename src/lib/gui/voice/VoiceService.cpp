@@ -53,9 +53,15 @@ void VoiceService::apply()
   m_backend.close();
   if (!wanted.enabled)
     return;
-#ifndef Q_OS_MACOS
+#if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
   m_backend.unavailable(tr("此平台发送端尚未接入"));
   return;
+#endif
+#ifdef Q_OS_WIN
+  if (wanted.role == QStringLiteral("receive")) {
+    m_backend.unavailable(tr("接收语音由 Windows 语音组件提供"));
+    return;
+  }
 #endif
   try {
     const auto peer = VoicePeer::load(path);

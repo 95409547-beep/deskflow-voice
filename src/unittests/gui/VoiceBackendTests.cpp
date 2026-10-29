@@ -23,11 +23,18 @@ private Q_SLOTS:
     wire.clear();
     QVERIFY_THROWS_EXCEPTION(std::runtime_error, wire.append(QByteArray::fromHex("000000025b5d")));
   }
+  void repeatedRoundsWaitForAckAndStop_data()
+  {
+    QTest::addColumn<int>("sender");
+    QTest::newRow("mac-to-windows") << static_cast<int>(deskflow::voice::Platform::MacOS);
+    QTest::newRow("windows-to-windows") << static_cast<int>(deskflow::voice::Platform::Windows);
+  }
   void repeatedRoundsWaitForAckAndStop()
   {
+    QFETCH(int, sender);
     LoopbackReceiver receiver;
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, static_cast<deskflow::voice::Platform>(sender));
     backend.configure(receiver.peer());
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);
@@ -57,7 +64,7 @@ private Q_SLOTS:
     LoopbackReceiver receiver;
     receiver.autoStart = receiver.autoEnd = false;
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(receiver.peer());
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);
@@ -77,7 +84,7 @@ private Q_SLOTS:
   {
     LoopbackReceiver receiver;
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(receiver.peer());
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);
@@ -100,7 +107,7 @@ private Q_SLOTS:
     auto *capture = new FakeCapture;
     auto peer = receiver.peer();
     peer.certificateSha256.fill('x');
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(peer);
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.status().contains(QStringLiteral("身份不匹配")), 7000);
@@ -112,7 +119,7 @@ private Q_SLOTS:
   {
     LoopbackReceiver receiver;
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(receiver.peer());
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);
@@ -136,7 +143,7 @@ private Q_SLOTS:
   {
     LoopbackReceiver receiver;
     auto *capture = new FakeCapture;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(receiver.peer());
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);
@@ -153,7 +160,7 @@ private Q_SLOTS:
     LoopbackReceiver receiver;
     auto *capture = new FakeCapture;
     capture->allowed = false;
-    VoiceBackend backend(nullptr, capture);
+    VoiceBackend backend(nullptr, capture, testSenderPlatform);
     backend.configure(receiver.peer());
     backend.connectPeer();
     QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);

@@ -15,6 +15,10 @@
 #include <QUuid>
 
 using namespace deskflow::gui::voice;
+// Unsupported hosts still exercise the portable sender with fake audio.
+inline constexpr auto testSenderPlatform = VoiceBackend::senderPlatform() == deskflow::voice::Platform::Unsupported
+                                               ? deskflow::voice::Platform::MacOS
+                                               : VoiceBackend::senderPlatform();
 class FakeCapture : public AudioCapture
 {
 public:
