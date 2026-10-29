@@ -166,6 +166,10 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   });
   connect(refresh, &QPushButton::clicked, this, &SettingsPage::refreshDevices);
   connect(m_action, &QPushButton::clicked, this, [this] {
+    if (m_backend && sending() && !sourcePresent()) {
+      m_tabs->setCurrentIndex(1);
+      return;
+    }
     if (!m_enabled->isChecked() && m_writable) {
       m_enabled->setChecked(true);
       if (!m_liveControls && (m_backend || m_receiver))
@@ -400,6 +404,13 @@ void SettingsPage::refreshStatus()
             : tr("%1 · 按住试说，松开结束。").arg(m_input->currentText())
     );
     m_action->setText(tr("连接语音"));
+  }
+  if (m_backend && !m_receiver && m_enabled->isChecked() && sender && !sourcePresent()) {
+    m_title->setText(tr("连接麦克风"));
+    m_hint->setText(tr("接回麦克风，或在设备页选择声音来源。"));
+    m_action->setText(tr("选择声音来源"));
+    m_action->show();
+    m_talk->hide();
   }
   if (m_receiver) {
     m_role->setEnabled(false);

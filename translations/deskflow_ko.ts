@@ -1618,6 +1618,18 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>连接麦克风</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接回麦克风，或在设备页选择声音来源。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>选择声音来源</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>声音来自 Mac，无需在这台电脑选择麦克风。</source>
         <translation type="unfinished"></translation>
     </message>

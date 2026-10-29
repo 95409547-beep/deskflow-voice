@@ -14,8 +14,11 @@
 #include <QComboBox>
 #include <QFile>
 #include <QFileInfo>
+#include <QLabel>
 #include <QLocalSocket>
+#include <QPushButton>
 #include <QSignalSpy>
+#include <QTabWidget>
 #include <QTemporaryDir>
 
 using namespace deskflow::voice;
@@ -341,6 +344,28 @@ private Q_SLOTS:
     QVERIFY(!service.backend()->ready());
     service.shutdown();
 #endif
+  }
+
+  void missingMicrophoneOffersSourceSelectionEvenWhenReceiverIsReady()
+  {
+    LoopbackReceiver receiver;
+    auto *capture = new FakeCapture;
+    VoiceBackend backend(nullptr, capture);
+    backend.configure(receiver.peer());
+    backend.connectPeer();
+    QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);
+    SettingsPage page(nullptr, [] { return AudioInputs{true, {}, {}}; });
+    auto prefs = Preferences::defaults();
+    prefs.enabled = true;
+    prefs.inputUid = QStringLiteral("unplugged-microphone");
+    page.loadPreferences(prefs);
+    page.bindBackend(&backend, false);
+    QCOMPARE(page.findChild<QLabel *>(QStringLiteral("voiceStatus"))->text(), QStringLiteral("连接麦克风"));
+    page.findChild<QPushButton *>(QStringLiteral("voicePrimaryAction"))->click();
+    QCOMPARE(page.findChild<QTabWidget *>(QStringLiteral("voicePages"))->currentIndex(), 1);
+    QCOMPARE(capture->starts, 0);
+    QCOMPARE(receiver.begins, 0);
+    QVERIFY(backend.ready());
   }
 
 private:
