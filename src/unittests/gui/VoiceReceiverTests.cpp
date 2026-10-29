@@ -18,6 +18,8 @@ void event(const char *type, bool ready = true)
 }
 int fixture(const QString &config)
 {
+  if (config.endsWith(QStringLiteral("early-exit.json")))
+    return 8;
   event("listening");
   event("authenticated");
   std::string command;
@@ -48,7 +50,23 @@ private Q_SLOTS:
     VoiceReceiver receiver(nullptr, QStringLiteral("missing-receiver-executable"));
     receiver.start(QStringLiteral("missing-config"));
     QVERIFY(!receiver.running());
+    QVERIFY(!receiver.startupRetryAllowed());
     QVERIFY(receiver.status().contains(QStringLiteral("安装与配对")));
+  }
+  void onlyFailuresBeforeListeningAllowAutomaticStartupRetry()
+  {
+    QTemporaryDir directory;
+    const auto config = directory.filePath(QStringLiteral("early-exit.json"));
+    QFile file(config);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.close();
+    VoiceReceiver receiver(nullptr, QCoreApplication::applicationFilePath());
+    receiver.start(config);
+    auto *child = receiver.findChild<QProcess *>();
+    QTRY_VERIFY(child->state() == QProcess::NotRunning && child->exitCode() == 8);
+    QVERIFY(receiver.startupRetryAllowed());
+    QVERIFY(receiver.stop());
+    QVERIFY(!receiver.startupRetryAllowed());
   }
   void repeatedStartsAreIdempotentAndStopCleansOwnedChild()
   {
@@ -87,6 +105,7 @@ private Q_SLOTS:
     VoiceReceiver receiver(nullptr, QCoreApplication::applicationFilePath());
     receiver.start(config);
     QTRY_VERIFY(receiver.connected());
+    QVERIFY(!receiver.startupRetryAllowed());
     auto *child = receiver.findChild<QProcess *>();
     child->write("test:start\n");
     QTRY_VERIFY(receiver.recording());
@@ -94,6 +113,7 @@ private Q_SLOTS:
     QTRY_VERIFY(!receiver.running());
     QVERIFY(!receiver.connected());
     QVERIFY(!receiver.recording());
+    QVERIFY(!receiver.startupRetryAllowed());
     receiver.start(config);
     QTRY_VERIFY(receiver.connected());
     QVERIFY(receiver.stop());

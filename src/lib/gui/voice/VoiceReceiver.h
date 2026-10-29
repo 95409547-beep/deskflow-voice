@@ -17,6 +17,11 @@ public:
   void start(const QString &config);
   bool stop();
   bool running() const;
+  bool active() const;
+  bool startupRetryAllowed() const
+  {
+    return m_startupRetryAllowed;
+  }
   bool connected() const
   {
     return m_connected;
@@ -39,5 +44,6 @@ private:
   QString m_executable, m_config, m_status;
   QByteArray m_lines;
   bool m_connected = false, m_recording = false, m_stopping = false;
+  bool m_startupRetryAllowed = false;
 };
 } // namespace deskflow::gui::voice

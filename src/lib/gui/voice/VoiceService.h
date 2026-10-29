@@ -36,6 +36,8 @@ public:
 
 private:
   void endpointChanged();
+  void updateRetry();
+  void reconnect();
   CoreProcess &m_core;
   VoiceBackend m_backend;
   VoiceRouting m_routing;
@@ -43,7 +45,9 @@ private:
   std::optional<Preferences> m_preferences;
   QString m_path;
   QDateTime m_modified;
-  bool m_running = true;
+  QTimer m_retry;
+  int m_retryDelay = 1000;
+  bool m_running = true, m_configured = false;
 };
 } // namespace voice
 } // namespace deskflow::gui

@@ -25,6 +25,7 @@ VoiceReceiver::VoiceReceiver(QObject *parent, QString executable)
   });
 #endif
   connect(m_process, &QProcess::readyReadStandardOutput, this, &VoiceReceiver::read);
+  connect(m_process, &QProcess::stateChanged, this, [this] { Q_EMIT changed(); });
   // Diagnostic output stays private to the child; never forward installation details into the UI.
   connect(m_process, &QProcess::readyReadStandardError, this, [this] { m_process->readAllStandardError(); });
   connect(m_process, &QProcess::errorOccurred, this, [this] {
@@ -53,6 +54,10 @@ bool VoiceReceiver::running() const
 {
   return m_process->state() == QProcess::Running;
 }
+bool VoiceReceiver::active() const
+{
+  return m_process->state() != QProcess::NotRunning;
+}
 void VoiceReceiver::setStatus(const QString &status)
 {
   m_status = status;
@@ -70,6 +75,7 @@ void VoiceReceiver::start(const QString &config)
     return;
   }
   m_stopping = false;
+  m_startupRetryAllowed = true;
   setStatus(tr("正在准备语音接收"));
   m_process->setProgram(m_executable);
   m_process->setArguments({QStringLiteral("--serve-v2-managed"), config});
@@ -78,6 +84,7 @@ void VoiceReceiver::start(const QString &config)
 bool VoiceReceiver::stop()
 {
   m_stopping = true;
+  m_startupRetryAllowed = false;
   m_connected = false;
   if (m_process->state() != QProcess::NotRunning) {
     // EOF also stops a managed receiver if the GUI crashes.
@@ -107,9 +114,12 @@ void VoiceReceiver::read()
     m_lines.remove(0, length + 1);
     const auto details = QJsonDocument::fromJson(line).object().value(QStringLiteral("details")).toObject();
     const auto type = details.value(QStringLiteral("type")).toString();
-    if (type == QStringLiteral("listening"))
+    if (type == QStringLiteral("listening")) {
+      // After native work becomes possible, an unexpected exit needs explicit
+      // recovery. Never restart a receiver whose RPC result may be unknown.
+      m_startupRetryAllowed = false;
       setStatus(tr("接收已开启，等待 Mac 连接"));
-    else if (type == QStringLiteral("authenticated")) {
+    } else if (type == QStringLiteral("authenticated")) {
       m_connected = true;
       setStatus(tr("已连接 Mac，可以开始说话"));
     } else if (type == QStringLiteral("started") || type == QStringLiteral("native_started")) {
