@@ -308,9 +308,11 @@ void Settings::checkIfSettingsWritableChange()
 
 QVariant Settings::defaultValue(const QString &key)
 {
+  if (kVoiceProduct && key == Gui::AutoUpdateCheck)
+    return false;
   if (key == Voice::Role)
     return QStringLiteral("auto");
-  if (key == Voice::InputUid || key == Voice::TargetComputer || key == Voice::PeerFile)
+  if (key == Voice::InputUid || key == Voice::TargetComputer || key == Voice::PeerFile || key == Voice::ReceiverFile)
     return QString();
   if (key == Voice::Shortcut) {
 #ifdef Q_OS_MACOS

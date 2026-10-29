@@ -617,6 +617,18 @@ A bound IP is now invalid, you may need to restart the server.</source>
 割り当て済みのIPアドレスが無効になりました。サーバーを再起動する必要があるかもしれません。</translation>
     </message>
     <message>
+        <source>语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>键鼠连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已连接的 Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;File</source>
         <translation>ファイル(&amp;F)</translation>
     </message>
@@ -1520,6 +1532,10 @@ Enabling this setting will disable the server config GUI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>登录后随软件准备，关闭窗口后在托盘继续运行。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>随本软件准备；开机启动将在安装器中提供。</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1601,6 +1617,30 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>连接语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>声音来自 Mac，无需在这台电脑选择麦克风。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mac 已连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>等待 Mac 连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开启语音接收</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>在 Windows 输入框中，按住 Mac 的说话键，松开结束。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开启接收</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1720,6 +1760,65 @@ Enabling this setting will disable the server config GUI.</source>
     </message>
     <message>
         <source>等待键鼠核心准备语音键</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::voice::VoiceReceiver</name>
+    <message>
+        <source>接收服务无法启动，请检查安装</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收服务已停止，请重新开启</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音接收未开启</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请先完成接收端安装与配对</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在准备语音接收</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在等待输入法结束，请稍候</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收状态异常，请重新开启</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收已开启，等待 Mac 连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已连接 Mac，可以开始说话</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在接收语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已结束，可以继续下一句</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请检查输入法后重新连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>连接已断开，正在结束本轮</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收未就绪，请检查输入法与声音组件</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

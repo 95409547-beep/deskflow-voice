@@ -9,6 +9,7 @@
 
 #include "MainWindow.h"
 #include "gui/voice/VoiceService.h"
+#include "gui/voice/VoiceSettingsPage.h"
 #include "ui_MainWindow.h"
 
 #include "Diagnostic.h"
@@ -49,6 +50,8 @@
 #include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollBar>
+#include <QTabWidget>
+#include <QTimer>
 
 #include <memory>
 
@@ -85,6 +88,39 @@ MainWindow::MainWindow()
   ui->setupUi(this);
   m_voiceService = new voice::VoiceService(m_coreProcess, this);
   m_voiceService->apply();
+  auto *pages = new QTabWidget(this);
+  auto *keyboardPage = takeCentralWidget();
+  m_voicePage = new voice::SettingsPage(pages);
+#ifdef Q_OS_WIN
+  m_voicePage->bindReceiver(m_voiceService->receiver());
+#else
+  m_voicePage->bindBackend(m_voiceService->backend(), false);
+#endif
+  pages->addTab(m_voicePage, tr("语音"));
+  pages->addTab(keyboardPage, tr("键鼠连接"));
+  setCentralWidget(pages);
+  setMinimumSize(740, 560);
+  refreshVoicePage();
+  connect(m_voicePage, &voice::SettingsPage::preferencesChanged, this, [this] {
+    const auto values = m_voicePage->preferences().toValues();
+    for (auto it = values.cbegin(); it != values.cend(); ++it)
+      Settings::setValue(it.key(), it.value());
+    Settings::save();
+    m_voiceService->apply();
+  });
+  connect(m_voicePage, &voice::SettingsPage::reconnectRequested, m_voiceService, &voice::VoiceService::retry);
+  auto *voiceRefresh = new QTimer(this);
+  connect(voiceRefresh, &QTimer::timeout, this, [this] {
+    const bool server = m_coreProcess.mode() != CoreMode::Client;
+    const auto peers = m_coreProcess.connectedClients();
+    const bool connected = m_coreProcess.hasConnectionSnapshot() &&
+                           (server ? !peers.isEmpty() : m_coreProcess.connectionState() == ConnectionState::Connected);
+    m_voicePage->setConnectionSnapshot(
+        {m_coreProcess.hasConnectionSnapshot(), connected, server,
+         !server && connected ? QStringList{tr("已连接的 Mac")} : peers}
+    );
+  });
+  voiceRefresh->start(1000);
 
   setWindowIcon(QIcon::fromTheme(kRevFqdnName));
 
@@ -472,13 +508,21 @@ void MainWindow::openGetNewVersionUrl() const
 
 void MainWindow::openSettings()
 {
-  auto dialog = SettingsDialog(this, m_serverConfig, &m_coreProcess, m_voiceService->backend());
+  auto dialog = SettingsDialog(
+      this, m_serverConfig, &m_coreProcess,
+#ifdef Q_OS_WIN
+      nullptr, m_voiceService->receiver()
+#else
+      m_voiceService->backend()
+#endif
+  );
   connect(&dialog, &SettingsDialog::voiceReconnectRequested, m_voiceService, &voice::VoiceService::retry);
 
   connect(&dialog, &SettingsDialog::requestRemoveAllSettings, this, &MainWindow::clearSettings, Qt::UniqueConnection);
   if (dialog.exec() == QDialog::Accepted) {
     Settings::save();
     m_voiceService->apply();
+    refreshVoicePage();
     disconnect(&dialog, &SettingsDialog::requestRemoveAllSettings, nullptr, nullptr);
 
     if (dialog.requiresCoreRestart()) {
@@ -487,6 +531,14 @@ void MainWindow::openSettings()
         m_coreProcess.restart();
     }
   }
+}
+
+void MainWindow::refreshVoicePage()
+{
+  QVariantMap values;
+  for (const auto &key : voice::Preferences::defaults().toValues().keys())
+    values.insert(key, Settings::value(key));
+  m_voicePage->loadPreferences(voice::Preferences::fromValues(values));
 }
 
 void MainWindow::resetCore()
@@ -650,7 +702,7 @@ void MainWindow::open()
     Settings::setValue(Settings::Gui::AutoUpdateCheck, messages::showUpdateCheckOption(this));
   }
 
-  if (Settings::value(Settings::Gui::AutoUpdateCheck).toBool()) {
+  if (!kVoiceProduct && Settings::value(Settings::Gui::AutoUpdateCheck).toBool()) {
     m_versionChecker.checkLatest();
   } else {
     qDebug() << "skipping check for new version, disabled";

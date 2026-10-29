@@ -30,6 +30,7 @@ void VoiceService::shutdown()
   m_running = false;
   m_routing.detach();
   m_backend.close();
+  m_receiver.stop();
 }
 void VoiceService::apply()
 {
@@ -40,8 +41,16 @@ void VoiceService::apply()
     values.insert(key, Settings::value(key));
   const auto wanted = Preferences::fromValues(values);
   auto path = Settings::value(Settings::Voice::PeerFile).toString();
+#ifdef Q_OS_WIN
+  path = Settings::value(Settings::Voice::ReceiverFile).toString();
+#endif
   if (path.isEmpty())
+#ifdef Q_OS_WIN
+    path =
+        QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/voice/receiver.json");
+#else
     path = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/voice/peer.json");
+#endif
   const auto modified = QFileInfo(path).lastModified();
   if (m_preferences && wanted == *m_preferences && path == m_path && modified == m_modified)
     return;
@@ -51,8 +60,13 @@ void VoiceService::apply()
   m_routing.configure(false, {}, {});
   m_routing.detach();
   m_backend.close();
+  m_receiver.stop();
   if (!wanted.enabled)
     return;
+#ifdef Q_OS_WIN
+  m_receiver.start(path);
+  return;
+#endif
 #ifndef Q_OS_MACOS
   m_backend.unavailable(tr("此平台发送端尚未接入"));
   return;

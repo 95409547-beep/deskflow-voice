@@ -54,7 +54,7 @@ internal sealed class V2Options
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 internal static class V2Server
 {
-    internal static int Run(V2Options options)
+    internal static int Run(V2Options options, bool managed = false)
     {
         if (!Environment.UserInteractive || Process.GetCurrentProcess().SessionId == 0) throw new InvalidOperationException("V2 input backend requires an interactive user session");
         Directory.CreateDirectory(options.StateDirectory);
@@ -71,6 +71,7 @@ internal static class V2Server
         if (!string.Equals(certificate.GetCertHashString(HashAlgorithmName.SHA256), options.CertificateSha256, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("Server certificate fingerprint mismatch");
         using var cancellation = new CancellationTokenSource();
+        if (managed) _ = Task.Run(() => ManagedLifetime.Watch(Console.In, cancellation));
         ConsoleCancelEventHandler handler = (_, args) => { args.Cancel = true; cancellation.Cancel(); };
         Console.CancelKeyPress += handler;
         var listener = new TcpListener(IPAddress.Parse(options.BindAddress), options.Port);
@@ -97,7 +98,7 @@ internal static class V2Server
                 Status(true, null, false);
             }
         }
-        finally { listener.Stop(); Console.CancelKeyPress -= handler; Status(false, null, false); }
+        finally { cancellation.Cancel(); listener.Stop(); Console.CancelKeyPress -= handler; Status(false, null, false); }
         return 0;
     }
     private static void Handle(TcpClient client, X509Certificate2 certificate, V2Options options, CancellationToken cancellation,

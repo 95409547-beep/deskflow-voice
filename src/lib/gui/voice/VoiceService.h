@@ -5,6 +5,7 @@
 #pragma once
 #include "VoiceBackend.h"
 #include "VoicePreferences.h"
+#include "VoiceReceiver.h"
 #include "VoiceRouting.h"
 #include <QDateTime>
 #include <optional>
@@ -21,6 +22,10 @@ public:
   {
     return &m_backend;
   }
+  VoiceReceiver *receiver()
+  {
+    return &m_receiver;
+  }
   void apply();
   void shutdown();
   void retry()
@@ -34,6 +39,7 @@ private:
   CoreProcess &m_core;
   VoiceBackend m_backend;
   VoiceRouting m_routing;
+  VoiceReceiver m_receiver;
   std::optional<Preferences> m_preferences;
   QString m_path;
   QDateTime m_modified;

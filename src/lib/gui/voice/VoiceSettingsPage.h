@@ -19,6 +19,7 @@ class QTabWidget;
 
 namespace deskflow::gui::voice {
 class VoiceBackend;
+class VoiceReceiver;
 
 struct ConnectionSnapshot
 {
@@ -43,6 +44,7 @@ public:
   void setConnectionSnapshot(const ConnectionSnapshot &snapshot);
   bool serviceReady() const;
   void bindBackend(VoiceBackend *backend, bool liveControls = true);
+  void bindReceiver(VoiceReceiver *receiver);
 
 Q_SIGNALS:
   void preferencesChanged();
@@ -77,6 +79,7 @@ private:
   QLabel *m_startup;
   QLabel *m_detailsText;
   QPointer<VoiceBackend> m_backend;
+  QPointer<VoiceReceiver> m_receiver;
   bool m_liveControls = true;
 };
 

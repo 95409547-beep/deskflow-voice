@@ -28,7 +28,8 @@
 using namespace deskflow::gui;
 
 SettingsDialog::SettingsDialog(
-    QWidget *parent, const ServerConfig &serverConfig, CoreProcess *core, voice::VoiceBackend *backend
+    QWidget *parent, const ServerConfig &serverConfig, CoreProcess *core, voice::VoiceBackend *backend,
+    voice::VoiceReceiver *receiver
 )
     : QDialog(parent),
       ui{std::make_unique<Ui::SettingsDialog>()},
@@ -41,6 +42,8 @@ SettingsDialog::SettingsDialog(
   m_voicePage = new voice::SettingsPage(this);
   if (backend)
     m_voicePage->bindBackend(backend, false);
+  if (receiver)
+    m_voicePage->bindReceiver(receiver);
   ui->tabWidget->addTab(m_voicePage, tr("跨设备语音"));
   layout()->addWidget(m_buttonBox);
   ui->tabWidget->setCurrentIndex(0);
@@ -84,6 +87,8 @@ SettingsDialog::SettingsDialog(
   }
 
   loadFromConfig();
+  if (kVoiceProduct)
+    ui->cbAutoUpdate->setEnabled(false);
   logLevelChanged();
 
   adjustSize();
