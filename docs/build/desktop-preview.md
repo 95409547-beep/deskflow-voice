@@ -31,7 +31,11 @@ python tools/package_macos_preview.py --build-dir /absolute/product-build --qt-d
 
 ## 当前验证门槛
 
-Mac产品1.27.0.23（源码7848c34）完整构建及10组明确安全CTest已通过。新增接收生命周期测试使用自己的假子进程，检查重复启动、正常停止、意外退出与销毁收尾。Windows产品1.27.0.25（源码8045f6b）已完成全新构建和4组Qt回归（35项通过、4项预期跳过、0失败）；未变的C#组件此前通过170项托管检查和DPAPI兼容检查。已配置两台设备上的独立产品及登录启动，确认键鼠TLS与语音V2就绪；Mac登录入口实际重载成功，Windows登录入口已验证复用现有实例。整机重启和新安装版真人语音输入仍需单独记录，不能据此宣称均已通过。
+Mac产品1.27.0.23（源码7848c34）完整构建及10组明确安全CTest已通过。新增接收生命周期测试使用自己的假子进程，检查重复启动、正常停止、意外退出与销毁收尾。Windows产品1.27.0.25（源码8045f6b）已完成全新构建和4组Qt回归（35项通过、4项预期跳过、0失败）；未变的C#组件此前通过170项托管检查和DPAPI兼容检查。已配置两台设备上的独立产品及登录启动，确认键鼠TLS与语音V2就绪；Mac登录入口实际重载成功，Windows登录入口已验证复用现有实例。整机重启尚未测试。
+
+安装后首次遥控器测试只唤起了Mac本机语音，Windows没有收到BEGIN。正常重启Mac核心刷新事件捕获后，用户确认实体右Option只唤起Windows语音，随后遥控器连续两句都在Windows出字、松开停止。Windows同期记录5轮started/native_started及正常end，每轮StopCalls=1、ready=true，结束后原生麦克风关闭；日志轮数与用户确认的两句话分别统计。此结果证明该安装版本的通路已恢复，不证明事件捕获优先级不会再次变化。
+
+Mac现改为每次离开本机屏幕时，在捕获线程重新建立HID头部事件tap，避免后来注册的本机输入法先处理共享修饰键。新tap和run-loop source创建成功后才替换旧tap，失败保留既有捕获；不重置按键状态、不重启核心、不模拟输入。实现遵循[Apple事件tap插入顺序定义](https://developer.apple.com/documentation/coregraphics/cgeventtapplacement/headinserteventtap?language=objc)。该改动的构建、部署和切屏重复验收须另外记录，不能沿用前一版本的实测结论。
 
 Windows安装使用到私有设置目录的junction。产品读取它的真实目录目标，让GUI、core和Qt配置锁使用一致路径；`voice/receiverFile`必须登记在配置保留列表，避免初始化时清理掉。以下回归复制无个人配置的公开包到临时目录，只用`--version`验证实际初始化、退出和接收路径保留，禁用核心与语音，不发送输入或录音：
 
