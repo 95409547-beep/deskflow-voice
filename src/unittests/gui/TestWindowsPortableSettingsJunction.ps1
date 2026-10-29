@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2026 Deskflow Voice contributors
 # SPDX-License-Identifier: GPL-2.0-only WITH LicenseRef-OpenSSL-Exception
 [CmdletBinding()]
 param([Parameter(Mandatory)][string]$PackagePath)
