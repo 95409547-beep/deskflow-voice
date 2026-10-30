@@ -20,11 +20,11 @@ if /bin/ps -ax -o comm= | /usr/bin/grep -F -x -q "$destination/Contents/MacOS/De
 fi
 mkdir -p "$HOME/Applications"
 temporary=$(/usr/bin/mktemp -d "$HOME/Applications/.deskflow-voice-install.XXXXXX")
-backup=''
+previous="$temporary/previous.app"
 finished=false
 cleanup() {
-  if [[ "$finished" != true && -n "$backup" && ! -e "$destination" ]]; then
-    /bin/mv "$backup" "$destination"
+  if [[ "$finished" != true && -d "$previous" && ! -e "$destination" ]]; then
+    /bin/mv "$previous" "$destination"
   fi
   /bin/rm -rf "$temporary"
 }
@@ -35,8 +35,11 @@ if [[ -e "$destination" ]]; then
   backup_root="$HOME/Library/Application Support/DeskflowVoice/install-backups"
   /bin/mkdir -p "$backup_root"
   /bin/chmod 700 "$backup_root"
-  backup="$backup_root/Deskflow Voice-$(/bin/date +%Y%m%d-%H%M%S)-$(/usr/bin/uuidgen).app"
-  /bin/mv "$destination" "$backup"
+  backup="$backup_root/Deskflow Voice-$(/bin/date +%Y%m%d-%H%M%S)-$(/usr/bin/uuidgen).zip"
+  /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$destination" "$backup"
+  /bin/chmod 600 "$backup"
+  /usr/bin/unzip -tq "$backup" >/dev/null
+  /bin/mv "$destination" "$previous"
 fi
 /bin/mv "$temporary/Deskflow Voice.app" "$destination"
 finished=true

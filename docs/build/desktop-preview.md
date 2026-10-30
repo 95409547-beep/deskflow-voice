@@ -25,7 +25,7 @@ python tools/build_macos.py --qt-dir /absolute/Qt/6.11.3/macos --openssl-dir /ab
 python tools/package_macos_preview.py --build-dir /absolute/product-build --qt-dir /absolute/Qt/6.11.3/macos --output-dir /absolute/new-preview
 ```
 
-打包拒绝脏源码或已有输出目录，带入匹配的GUI/core、Qt依赖、许可与源码版本清单，验证ad-hoc签名及两个可执行文件版本。安装命令复制到当前用户的Applications，确认目标程序未运行，已有版本移到私有备份后再替换。个人配对信息不在应用或安装文件里。
+打包拒绝脏源码或已有输出目录，带入匹配的GUI/core、Qt依赖、许可与源码版本清单，验证ad-hoc签名及两个可执行文件版本。安装命令复制到当前用户的Applications，确认目标程序未运行，将已有版本压缩为当前用户私有ZIP并检查完整性后再替换，失败恢复原应用。备份不再长期保留为可被系统注册的`.app`，避免更新后出现多个同名启动入口。个人配对信息不在应用或安装文件里。
 
 独立配置准备工具只读原配置、指定的语音偏好和配对文件，复制TLS信任到新目录并设为用户私有。初次准备关闭自动核心和语音，先检查权限与界面，之后再做两端空闲切换和自启迁移；不会先破坏当前可用链路。
 
