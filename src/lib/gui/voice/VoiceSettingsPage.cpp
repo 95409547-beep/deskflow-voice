@@ -4,6 +4,7 @@
  */
 #include "VoiceSettingsPage.h"
 #include "VoiceBackend.h"
+#include "VoiceReceiver.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -165,9 +166,18 @@ SettingsPage::SettingsPage(QWidget *parent, std::function<AudioInputs()> query)
   });
   connect(refresh, &QPushButton::clicked, this, &SettingsPage::refreshDevices);
   connect(m_action, &QPushButton::clicked, this, [this] {
-    if (!m_enabled->isChecked() && m_writable)
+    if (m_backend && sending() && !sourcePresent()) {
+      m_tabs->setCurrentIndex(1);
+      return;
+    }
+    if (!m_enabled->isChecked() && m_writable) {
       m_enabled->setChecked(true);
-    if (m_backend && m_enabled->isChecked()) {
+      if (!m_liveControls && (m_backend || m_receiver))
+        return; // The owner applies the newly enabled preference once.
+    }
+    if (m_receiver && m_enabled->isChecked()) {
+      Q_EMIT reconnectRequested();
+    } else if (m_backend && m_enabled->isChecked()) {
       if (m_liveControls)
         m_backend->connectPeer();
       else
@@ -193,6 +203,8 @@ void SettingsPage::loadPreferences(const Preferences &preferences)
   m_enabled->setChecked(preferences.enabled);
   const auto role = m_role->findData(preferences.role);
   m_role->setCurrentIndex(role >= 0 ? role : 0);
+  if (m_receiver)
+    m_role->setCurrentIndex(m_role->findData(QStringLiteral("receive")));
 #ifdef Q_OS_MACOS
   if (m_role->currentData() == QStringLiteral("receive"))
     m_role->setCurrentIndex(0);
@@ -245,6 +257,8 @@ void SettingsPage::setWritable(bool writable)
 
 bool SettingsPage::sending() const
 {
+  if (m_receiver)
+    return false;
 #ifdef Q_OS_MACOS
   return true;
 #else
@@ -314,7 +328,21 @@ bool SettingsPage::sourcePresent() const
 
 bool SettingsPage::serviceReady() const
 {
+  if (m_receiver)
+    return m_receiver->running();
   return m_backend && m_backend->inputReady();
+}
+
+void SettingsPage::bindReceiver(VoiceReceiver *receiver)
+{
+  m_receiver = receiver;
+  m_liveControls = false;
+  if (receiver)
+    connect(receiver, &VoiceReceiver::changed, this, &SettingsPage::refreshStatus);
+  // This installation is the Mac-to-Windows release. Other roles remain parked.
+  m_role->setCurrentIndex(m_role->findData(QStringLiteral("receive")));
+  m_startup->setText(tr("登录后随软件准备，关闭窗口后在托盘继续运行。"));
+  refreshDevices();
 }
 
 void SettingsPage::bindBackend(VoiceBackend *backend, bool liveControls)
@@ -340,7 +368,7 @@ void SettingsPage::bindBackend(VoiceBackend *backend, bool liveControls)
 void SettingsPage::refreshStatus()
 {
   const bool sender = sending();
-  m_role->setEnabled(m_writable);
+  m_role->setEnabled(m_writable && !m_receiver);
   m_enabled->setEnabled(m_writable);
   m_input->setEnabled(m_writable && sender);
   m_target->setEnabled(m_writable && sender && !m_backend);
@@ -353,8 +381,8 @@ void SettingsPage::refreshStatus()
   m_sourceLabel->setText(
       !sender                     ? tr("声音来源在发送端设置")
       : !m_inputs.error.isEmpty() ? m_inputs.error
-      : sourcePresent()           ? tr("已找到声音来源，尚未收音")
-                                  : tr("声音来源不可用，请连接或更换设备")
+      : sourcePresent()           ? tr("设备已连接")
+                                  : tr("设备不可用，请更换")
   );
 #if !defined(Q_OS_MACOS) && !defined(Q_OS_WIN)
   m_title->setText(tr("当前平台尚不支持语音"));
@@ -376,6 +404,25 @@ void SettingsPage::refreshStatus()
             : tr("%1 · 按住试说，松开结束。").arg(m_input->currentText())
     );
     m_action->setText(tr("连接语音"));
+  }
+  if (m_backend && !m_receiver && m_enabled->isChecked() && sender && !sourcePresent()) {
+    m_title->setText(tr("连接麦克风"));
+    m_hint->setText(tr("接回麦克风，或在设备页选择声音来源。"));
+    m_action->setText(tr("选择声音来源"));
+    m_action->show();
+    m_talk->hide();
+  }
+  if (m_receiver) {
+    m_role->setEnabled(false);
+    m_target->setEnabled(false);
+    m_shortcut->setEnabled(false);
+    m_talk->hide();
+    m_sourceLabel->setText(tr("声音来自 Mac，无需在这台电脑选择麦克风。"));
+    m_serviceLabel->setText(m_receiver->connected() ? tr("Mac 已连接") : tr("等待 Mac 连接"));
+    m_title->setText(m_enabled->isChecked() || m_receiver->running() ? m_receiver->status() : tr("开启语音接收"));
+    m_hint->setText(tr("在 Windows 输入框中，按住 Mac 的说话键，松开结束。"));
+    m_action->setText(tr("开启接收"));
+    m_action->setVisible(!m_enabled->isChecked() || !m_receiver->running());
   }
 }
 

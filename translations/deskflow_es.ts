@@ -571,6 +571,18 @@ Do you want to connect to the server?
         <translation>&lt;p&gt;Error al conectar con el servidor &apos;%1&apos;.&lt;/p&gt;&lt;p&gt;A Client with your name is already connected to the server.&lt;/p&gt;Please ensure that you&apos;re using a unique name and that only a single instance of the client process is running.&lt;/p&gt;</translation>
     </message>
     <message>
+        <source>语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>键鼠连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已连接的 Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Your current TLS key is smaller than the minimum allowed size, A new key 2048-bit key will be generated.</source>
         <translation type="unfinished">Su clave TLS actual es más pequeña que el tamaño mínimo permitido. Se generará una nueva clave de 2048 bits.</translation>
     </message>
@@ -1519,6 +1531,10 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>登录后随软件准备，关闭窗口后在托盘继续运行。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>随本软件准备；开机启动将在安装器中提供。</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1547,11 +1563,11 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>已找到声音来源，尚未收音</source>
+        <source>设备已连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>声音来源不可用，请连接或更换设备</source>
+        <source>设备不可用，请更换</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1600,6 +1616,42 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     </message>
     <message>
         <source>连接语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>连接麦克风</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接回麦克风，或在设备页选择声音来源。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>选择声音来源</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>声音来自 Mac，无需在这台电脑选择麦克风。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mac 已连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>等待 Mac 连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开启语音接收</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>在 Windows 输入框中，按住 Mac 的说话键，松开结束。</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开启接收</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1719,6 +1771,65 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     </message>
     <message>
         <source>等待键鼠核心准备语音键</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::voice::VoiceReceiver</name>
+    <message>
+        <source>接收服务无法启动，请检查安装</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收服务已停止，请重新开启</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>语音接收未开启</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请先完成接收端安装与配对</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在准备语音接收</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在等待输入法结束，请稍候</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收状态异常，请重新开启</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收已开启，等待 Mac 连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已连接 Mac，可以开始说话</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>正在接收语音</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>已结束，可以继续下一句</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请检查输入法后重新连接</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>连接已断开，正在结束本轮</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>接收未就绪，请检查输入法与声音组件</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

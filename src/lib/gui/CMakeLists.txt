@@ -128,6 +128,8 @@ add_library(${target} STATIC
   voice/VoiceRouting.h
   voice/VoiceService.cpp
   voice/VoiceService.h
+  voice/VoiceReceiver.cpp
+  voice/VoiceReceiver.h
   voice/VoicePreferences.cpp
   voice/VoicePreferences.h
   voice/VoiceSettingsPage.cpp

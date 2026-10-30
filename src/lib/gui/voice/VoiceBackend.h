@@ -46,6 +46,10 @@ public:
   {
     return m_ready;
   }
+  bool connecting() const
+  {
+    return m_socket.state() != QAbstractSocket::UnconnectedState;
+  }
   bool busy() const;
   QString status() const
   {

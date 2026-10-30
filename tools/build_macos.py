@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--build-dir', type=Path, default=Path.home() / 'Library/Caches/DeskflowVoice/build/macos')
     parser.add_argument('--deployment-target', default='15.0')
     parser.add_argument('--test', action='store_true')
+    parser.add_argument('--product', action='store_true', help='Use isolated product identity and settings')
     args = parser.parse_args()
     if platform.system() != 'Darwin':
         parser.error('This entry builds macOS; use the portable voice-core entry for other hosts')
@@ -41,6 +42,7 @@ def main():
     configure = [str(cmake), '-S', str(repo), '-B', str(args.build_dir.resolve()), '-G', 'Ninja',
                  '-DCMAKE_BUILD_TYPE=Release', '-DBUILD_INSTALLER=OFF', '-DBUILD_TESTS=ON',
                  '-DSKIP_BUILD_TESTS=ON', '-DCMAKE_PREFIX_PATH=' + str(qt),
+                 '-DDESKFLOW_VOICE_PRODUCT=' + ('ON' if args.product else 'OFF'),
                  '-DCMAKE_MAKE_PROGRAM=' + str(ninja), '-DOPENSSL_ROOT_DIR=' + str(ssl),
                  '-DOPENSSL_USE_STATIC_LIBS=ON', '-DCMAKE_OSX_DEPLOYMENT_TARGET=' + args.deployment_target,
                  '-DCMAKE_OSX_ARCHITECTURES=' + platform.machine()]
@@ -51,7 +53,7 @@ def main():
         # Explicit safe suite excludes upstream cases that post real OS keys.
         env['QT_QPA_PLATFORM'] = 'offscreen'
         subprocess.run([str(ctest), '--test-dir', str(args.build_dir / 'src/unittests'),
-                        '-R', '^(VoiceSessionTests|VoiceKeyGateTests|VoiceRoutingTests|VoiceSettingsTests|VoiceBackendTests|OSXKeyStateSafeTests|TISMainThreadProbe|TISReadPathsTests|TISQtRuntimeProbe)$',
+                        '-R', '^(VoiceSessionTests|VoiceKeyGateTests|VoiceRoutingTests|VoiceSettingsTests|VoiceBackendTests|VoiceReceiverTests|OSXKeyStateSafeTests|TISMainThreadProbe|TISReadPathsTests|TISQtRuntimeProbe)$',
                         '--output-on-failure'], env=env, check=True)
 
 

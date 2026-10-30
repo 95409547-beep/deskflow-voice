@@ -14,8 +14,11 @@
 #include <QComboBox>
 #include <QFile>
 #include <QFileInfo>
+#include <QLabel>
 #include <QLocalSocket>
+#include <QPushButton>
 #include <QSignalSpy>
+#include <QTabWidget>
 #include <QTemporaryDir>
 
 using namespace deskflow::voice;
@@ -224,6 +227,46 @@ private Q_SLOTS:
     routing.detach();
   }
 
+  void voiceReconnectStopsCaptureAndRequiresFreshPress()
+  {
+    QTemporaryDir directory;
+    const auto secret = newSecret();
+    const auto name = controlName(directory);
+    const auto pid = QCoreApplication::applicationPid();
+    ControlServer core(nullptr, secret, name, pid);
+    QVERIFY(core.listen());
+    core.context({"Windows", true, true});
+    LoopbackReceiver receiver;
+    auto peer = receiver.peer();
+    peer.screen = QStringLiteral("Windows");
+    auto *capture = new FakeCapture;
+    VoiceBackend backend(nullptr, capture);
+    backend.configure(peer);
+    VoiceRouting routing(backend);
+    routing.configure(true, peer.screen, QStringLiteral("F8"));
+    routing.endpoint(name, secret, pid);
+    backend.connectPeer();
+    QTRY_VERIFY_WITH_TIMEOUT(routing.armed() && backend.routeEligible(), 7000);
+    QVERIFY(core.down(HoldKey::F8, 8, true));
+    QTRY_COMPARE_WITH_TIMEOUT(receiver.begins, 1, 3000);
+    receiver.client->abort();
+    QTRY_VERIFY_WITH_TIMEOUT(!backend.ready() && !capture->active && !backend.busy(), 3000);
+    QTRY_VERIFY_WITH_TIMEOUT(!routing.armed(), 3000);
+    backend.connectPeer();
+    QTRY_VERIFY_WITH_TIMEOUT(backend.ready() && routing.armed() && backend.routeEligible(), 7000);
+    core.repeat(8);
+    QTest::qWait(30);
+    QCOMPARE(capture->starts, 1);
+    QCOMPARE(receiver.begins, 1);
+    core.up(8);
+    QTest::qWait(30);
+    QVERIFY(core.down(HoldKey::F8, 8, true));
+    QTRY_COMPARE_WITH_TIMEOUT(receiver.begins, 2, 3000);
+    core.up(8);
+    QTRY_VERIFY_WITH_TIMEOUT(!backend.busy() && !capture->active, 3000);
+    routing.detach();
+  }
+
   void coreRestartRequiresFreshPressAndNewAuthentication()
   {
     QTemporaryDir directory;
@@ -336,11 +379,48 @@ private Q_SLOTS:
     service.apply();
     QTest::qWait(30);
     QCOMPARE(receiver.hellos, 1);
+    receiver.client->abort();
+    QTRY_VERIFY_WITH_TIMEOUT(!service.backend()->ready(), 3000);
+    QTRY_VERIFY_WITH_TIMEOUT(service.backend()->ready() && receiver.hellos == 2, 7000);
+    QCOMPARE(capture->starts, 0);
+    QCOMPARE(receiver.begins, 0);
     Settings::setValue(Settings::Voice::Enabled, false);
     service.apply();
     QVERIFY(!service.backend()->ready());
+    QTest::qWait(1200);
+    QCOMPARE(receiver.hellos, 2);
+    Settings::setValue(Settings::Voice::Enabled, true);
+    service.apply();
+    QTRY_VERIFY_WITH_TIMEOUT(service.backend()->ready() && receiver.hellos == 3, 7000);
+    receiver.client->abort();
+    QTRY_VERIFY_WITH_TIMEOUT(!service.backend()->ready(), 3000);
     service.shutdown();
+    QTest::qWait(1200);
+    QCOMPARE(receiver.hellos, 3);
+    QCOMPARE(capture->starts, 0);
 #endif
+  }
+
+  void missingMicrophoneOffersSourceSelectionEvenWhenReceiverIsReady()
+  {
+    LoopbackReceiver receiver;
+    auto *capture = new FakeCapture;
+    VoiceBackend backend(nullptr, capture);
+    backend.configure(receiver.peer());
+    backend.connectPeer();
+    QTRY_VERIFY_WITH_TIMEOUT(backend.ready(), 7000);
+    SettingsPage page(nullptr, [] { return AudioInputs{true, {}, {}}; });
+    auto prefs = Preferences::defaults();
+    prefs.enabled = true;
+    prefs.inputUid = QStringLiteral("unplugged-microphone");
+    page.loadPreferences(prefs);
+    page.bindBackend(&backend, false);
+    QCOMPARE(page.findChild<QLabel *>(QStringLiteral("voiceStatus"))->text(), QStringLiteral("连接麦克风"));
+    page.findChild<QPushButton *>(QStringLiteral("voicePrimaryAction"))->click();
+    QCOMPARE(page.findChild<QTabWidget *>(QStringLiteral("voicePages"))->currentIndex(), 1);
+    QCOMPARE(capture->starts, 0);
+    QCOMPARE(receiver.begins, 0);
+    QVERIFY(backend.ready());
   }
 
 private:

@@ -34,6 +34,18 @@ internal static class ManagedChecks
         checks["cli:no-args-help"] = CommandLine.Parse([]) == Command.Help;
         checks["cli:explicit-help"] = CommandLine.Parse(["--help"]) == Command.Help;
         checks["cli:managed-only-entry"] = CommandLine.Parse(["--check-managed"]) == Command.ManagedChecks;
+        checks["cli:managed-receiver-explicit"] = CommandLine.Parse(["--serve-v2-managed", "fixture.json"]) == Command.ServeV2Managed;
+        checks["cli:managed-receiver-no-config"] = CommandLine.Parse(["--serve-v2-managed"]) == Command.Invalid;
+        using (var lifetime = new CancellationTokenSource())
+        {
+            ManagedLifetime.Watch(new StringReader("ignored\nstop\n"), lifetime).GetAwaiter().GetResult();
+            checks["gui:stop-cancels-receiver"] = lifetime.IsCancellationRequested;
+        }
+        using (var lifetime = new CancellationTokenSource())
+        {
+            ManagedLifetime.Watch(new StringReader(""), lifetime).GetAwaiter().GetResult();
+            checks["gui:eof-cancels-receiver"] = lifetime.IsCancellationRequested;
+        }
         checks["cli:old-live-mode-rejected"] = CommandLine.Parse(["--right-alt-repeat"]) == Command.Invalid;
         checks["cli:extra-args-rejected"] = CommandLine.Parse(["--check-managed", "--enable"]) == Command.Invalid;
         checks["pattern:forwarded-down"] = HotkeyPattern.MatchesForwardedRightAlt(0xA5, 0x38, 0x31, 0);

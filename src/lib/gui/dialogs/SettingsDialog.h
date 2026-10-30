@@ -18,6 +18,7 @@ class CoreProcess;
 namespace voice {
 class SettingsPage;
 class VoiceBackend;
+class VoiceReceiver;
 } // namespace voice
 } // namespace deskflow::gui
 
@@ -33,7 +34,7 @@ public:
   void extracted();
   SettingsDialog(
       QWidget *parent, const ServerConfig &serverConfig, deskflow::gui::CoreProcess *core = nullptr,
-      deskflow::gui::voice::VoiceBackend *voice = nullptr
+      deskflow::gui::voice::VoiceBackend *voice = nullptr, deskflow::gui::voice::VoiceReceiver *receiver = nullptr
   );
   ~SettingsDialog() override;
   bool requiresCoreRestart() const

@@ -166,6 +166,7 @@ private:
   static bool getGlobalHotKeysEnabled();
 
   // Quartz event tap support
+  void refreshPrimaryEventTap();
   static CGEventRef handleCGInputEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon);
   static CGEventRef
   handleCGInputEventSecondary(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon);

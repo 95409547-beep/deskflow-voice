@@ -42,7 +42,8 @@ class DaemonIpcClient;
 }
 namespace deskflow::gui::voice {
 class VoiceService;
-}
+class SettingsPage;
+} // namespace deskflow::gui::voice
 
 class MainWindow : public QMainWindow
 {
@@ -113,6 +114,7 @@ private:
   void coreModeToggled(bool checked);
   void updateModeControls();
   void updateModeControlLabels();
+  void refreshVoicePage();
   std::unique_ptr<Ui::MainWindow> ui;
 
   void createMenuBar();
@@ -166,7 +168,7 @@ private:
 
   void serverClientsChanged(const QStringList &clients);
 
-  inline static const auto m_guiSocketName = QStringLiteral("deskflow-gui");
+  inline static const auto m_guiSocketName = QStringLiteral("%1-gui").arg(kAppId);
   inline static const auto m_nameRegEx = QRegularExpression(QStringLiteral("^[\\w\\-_\\.]{0,255}$"));
 
   VersionChecker m_versionChecker;
@@ -176,6 +178,7 @@ private:
   ServerConfig m_serverConfig;
   deskflow::gui::CoreProcess m_coreProcess;
   deskflow::gui::voice::VoiceService *m_voiceService = nullptr;
+  deskflow::gui::voice::SettingsPage *m_voicePage = nullptr;
   QSet<QString> m_ignoredClients;
   bool m_newClientPromptShowing = false;
   bool m_serverConfigDialogVisible = false;

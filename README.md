@@ -1,6 +1,6 @@
 # Deskflow Voice
 
-Deskflow 的跨设备语音开发分支。首版目标是 **Mac → Windows、Windows → Windows**，Windows → Mac 留给后续版本。
+Deskflow 的跨设备语音开发分支。当前先交付现有两台电脑的 **Mac → Windows 安装预览**；Windows → Windows 暂停，Windows → Mac 后续。
 
 当前是产品开发阶段，**还没有可供普通用户安装的完整语音发行版**。Mac普通USB麦克风已在独立开发窗口、主GUI全局F8两种入口分别通过连续两句真人输入与松开停止；按住切回Mac停止和重新按键输入也已通过。空闲重启与界面重开已恢复连接且未自动录音，断网等异常回归继续。Windows → Windows 发送端尚未接入。
 
@@ -30,6 +30,7 @@ ctest --test-dir build/voice -C Release --output-on-failure
 ## 开发说明
 
 - [范围与开发计划](docs/product/README.md)
+- [两端界面、安装预览与当前范围](docs/build/desktop-preview.md)
 - [会话接口与边界](docs/architecture/voice-session.md)
 - [首批技术与许可决策](docs/adr/0001-foundation.md)
 - [Mac 完整源码构建](docs/build/macos.md)

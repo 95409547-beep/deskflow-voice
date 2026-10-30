@@ -811,6 +811,57 @@ void OSXComputer::disable()
   m_isOnComputer = m_isPrimary;
 }
 
+void OSXComputer::refreshPrimaryEventTap()
+{
+  if (!m_isPrimary || !m_eventTapRunLoop) {
+    return;
+  }
+
+  if (CFRunLoopGetCurrent() != m_eventTapRunLoop) {
+    CFRunLoopPerformBlock(m_eventTapRunLoop, kCFRunLoopDefaultMode, ^{
+      refreshPrimaryEventTap();
+    });
+    CFRunLoopWakeUp(m_eventTapRunLoop);
+    return;
+  }
+
+  if (m_isOnComputer || !m_eventTapPort || !m_eventTapRLSR) {
+    return;
+  }
+
+  // Input methods can install a new head tap after enable(), then act on a
+  // shared modifier before our remote-screen filter consumes it. Reclaim the
+  // head when leaving the Mac; keep the same key state and run-loop thread.
+  auto port = CGEventTapCreate(
+      kCGHIDEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, kCGEventMaskForAllEvents, handleCGInputEvent,
+      this
+  );
+  if (!port) {
+    LOG_WARN("could not refresh quartz event tap; keeping existing capture");
+    return;
+  }
+
+  auto source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, port, 0);
+  if (!source) {
+    CFMachPortInvalidate(port);
+    CFRelease(port);
+    LOG_WARN("could not refresh quartz event source; keeping existing capture");
+    return;
+  }
+
+  // Prepare the replacement before retiring the working tap. All source and
+  // port changes run between callbacks on the tap's own run loop.
+  CFRunLoopAddSource(m_eventTapRunLoop, source, kCFRunLoopDefaultMode);
+  CFRunLoopRemoveSource(m_eventTapRunLoop, m_eventTapRLSR, kCFRunLoopDefaultMode);
+  CGEventTapEnable(m_eventTapPort, false);
+  CFMachPortInvalidate(m_eventTapPort);
+  CFRelease(m_eventTapRLSR);
+  CFRelease(m_eventTapPort);
+  m_eventTapRLSR = source;
+  m_eventTapPort = port;
+  LOG_INFO("refreshed quartz event tap for remote input");
+}
+
 void OSXComputer::enter()
 {
   m_isOnComputer = true;
@@ -855,6 +906,7 @@ void OSXComputer::leave()
 
   // now off computer
   m_isOnComputer = false;
+  refreshPrimaryEventTap();
 }
 
 bool OSXComputer::setClipboard(ClipboardID, const IClipboard *src)
